@@ -1,14 +1,19 @@
-import * as comps from './components'
-import crud from './components/crud'
+import * as comps from "./components";
+import crud from "./components/crud";
+import mitt from "mitt";
+
+import "@/common";
 
 export const CRUD = {
-    install(app) {
-        app.component('cl-crud', crud({}))
+	install(app) {
+		app.config.globalProperties.$mitt = mitt();
 
-        for (let i in comps) {
-            app.component(comps[i].name, comps[i]);
-        }
-    }
-}
+		app.component("cl-crud", crud({}));
 
-export default CRUD
+		for (let i in comps) {
+			app.component(comps[i].name, comps[i]);
+		}
+	}
+};
+
+export default CRUD;

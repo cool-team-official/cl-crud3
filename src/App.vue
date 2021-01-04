@@ -25,6 +25,96 @@
 <script>
 import { reactive } from "vue";
 
+const userList = [
+	{
+		id: 1,
+		name: "刘一",
+		process: 42.2,
+		createTime: "2019年09月02日",
+		price: 75.99,
+		salesRate: 52.2,
+		status: 1,
+		images: ["https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/1.jpg"]
+	},
+	{
+		id: 2,
+		name: "陈二",
+		process: 35.2,
+		createTime: "2019年09月05日",
+		price: 242.1,
+		salesRate: 72.1,
+		status: 1,
+		images: ["https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/2.jpg"]
+	},
+	{
+		id: 3,
+		name: "张三",
+		process: 10.2,
+		createTime: "2019年09月12日",
+		price: 74.11,
+		salesRate: 23.9,
+		status: 0,
+		images: ["https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/3.jpg"]
+	},
+	{
+		id: 4,
+		name: "李四",
+		process: 75.5,
+		createTime: "2019年09月13日",
+		price: 276.64,
+		salesRate: 47.2,
+		status: 0,
+		images: ["https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/4.jpg"]
+	},
+	{
+		id: 5,
+		name: "王五",
+		process: 25.4,
+		createTime: "2019年09月18日",
+		price: 160.23,
+		salesRate: 28.3,
+		status: 1,
+		images: ["https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/5.jpg"]
+	}
+];
+
+const testService = {
+	page: p => {
+		console.log("GET[page]", p);
+		return Promise.resolve({
+			list: userList,
+			pagination: {
+				page: p.page,
+				size: p.size,
+				total: 5
+			}
+		});
+	},
+	info: d => {
+		console.log("GET[info]", d);
+		return new Promise(resolve => {
+			resolve({
+				id: 1,
+				name: "icssoa",
+				price: 100,
+				ids: "0,3,2"
+			});
+		});
+	},
+	add: d => {
+		console.log("POST[add]", d);
+		return Promise.resolve();
+	},
+	delete: d => {
+		console.log("POST[delete]", d);
+		return Promise.resolve();
+	},
+	update: d => {
+		console.log("POST[update]", d);
+		return Promise.resolve();
+	}
+};
+
 export default {
 	setup() {
 		const state = reactive({
@@ -75,8 +165,9 @@ export default {
 	},
 
 	methods: {
-		onLoad({ ctx }) {
-			ctx.service({}).done();
+		onLoad({ ctx, app }) {
+			ctx.service(testService).done();
+			app.refresh();
 		},
 
 		onQueryChange(value) {

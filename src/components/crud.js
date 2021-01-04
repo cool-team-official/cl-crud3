@@ -3,11 +3,11 @@ import { bootstrap } from "@/app";
 import { __inst } from "@/options";
 import mitt from "mitt";
 
-const emitter = mitt()
+const emitter = mitt();
 
 require("@/assets/css/index.scss");
 
-export default function ({ __crud }) {
+export default function({ __crud }) {
 	return {
 		name: "cl-crud",
 		componentName: "ClCrud",
@@ -18,7 +18,7 @@ export default function ({ __crud }) {
 			onRefresh: Function
 		},
 
-		emits: ['load'],
+		emits: ["load"],
 
 		provide() {
 			return {
@@ -120,15 +120,15 @@ export default function ({ __crud }) {
 					return console.error(`Event[${i}].callback is not a function`);
 				}
 
-				__inst[`$${mode}`](i, (data) => {
+				__inst[`$${mode}`](i, data => {
 					callback(data, res);
 				});
 			}
 
 			// Window onresize
-			window.removeEventListener("resize", function () { });
+			window.removeEventListener("resize", function() {});
 			window.addEventListener("resize", () => {
-				this.broadcast("cl-table", "crud.resize");
+				emitter.emit("crud.resize");
 			});
 		},
 
@@ -146,22 +146,22 @@ export default function ({ __crud }) {
 
 			// Upsert add
 			rowAdd() {
-				this.broadcast("cl-upsert", "crud.add");
+				emitter.emit("crud.add");
 			},
 
 			// Upsert edit
 			rowEdit(data) {
-				this.broadcast("cl-upsert", "crud.edit", data);
+				emitter.emit("crud.edit", data);
 			},
 
 			// Upsert append
 			rowAppend(data) {
-				this.broadcast("cl-upsert", "crud.append", data);
+				emitter.emit("crud.append", data);
 			},
 
 			// Upsert close
 			rowClose() {
-				this.broadcast("cl-upsert", "crud.close");
+				emitter.emit("crud.close");
 			},
 
 			// Row delete
@@ -170,16 +170,16 @@ export default function ({ __crud }) {
 				const reqName = this.dict.api.delete;
 
 				let params = {
-					ids: selection.map((e) => e.id).join(",")
+					ids: selection.map(e => e.id).join(",")
 				};
 
 				// Delete
-				const next = (params) => {
+				const next = params => {
 					return new Promise((resolve, reject) => {
 						this.$confirm(`此操作将永久删除选中数据，是否继续？`, "提示", {
 							type: "warning"
 						})
-							.then((res) => {
+							.then(res => {
 								if (res === "confirm") {
 									// Validate
 									if (!this.service[reqName]) {
@@ -188,12 +188,12 @@ export default function ({ __crud }) {
 
 									// Send request
 									this.service[reqName](params)
-										.then((res) => {
+										.then(res => {
 											this.$message.success(`删除成功`);
 											this.refresh();
 											resolve(res);
 										})
-										.catch((err) => {
+										.catch(err => {
 											this.$message.error(err);
 											reject(err);
 										});
@@ -217,12 +217,12 @@ export default function ({ __crud }) {
 
 			// Open advSearch
 			openAdvSearch() {
-				this.broadcast("cl-adv-search", "crud.open");
+				emitter.emit("crud.open");
 			},
 
 			// close advSearch
 			closeAdvSearch() {
-				this.broadcast("cl-adv-search", "crud.close");
+				emitter.emit("crud.close");
 			},
 
 			// Refresh params replace
@@ -270,13 +270,12 @@ export default function ({ __crud }) {
 
 				// 渲染
 				const render = (list, pagination) => {
-					this.broadcast("cl-table", "crud.refresh", { list });
-					this.broadcast("cl-pagination", "crud.refresh", pagination);
+					this.$mitt.emit("crud.refresh", { list, pagination });
 					done();
 				};
 
 				// 请求执行
-				const next = (params) => {
+				const next = params => {
 					return new Promise((resolve, reject) => {
 						const reqName = this.dict.api.page;
 
@@ -286,7 +285,7 @@ export default function ({ __crud }) {
 						}
 
 						this.service[reqName](params)
-							.then((res) => {
+							.then(res => {
 								if (rd != this.test.refreshRd) {
 									return false;
 								}
@@ -303,7 +302,7 @@ export default function ({ __crud }) {
 
 								resolve(res);
 							})
-							.catch((err) => {
+							.catch(err => {
 								console.error(err);
 								this.$message.error(err);
 								reject(err);
@@ -324,7 +323,7 @@ export default function ({ __crud }) {
 
 			// Layout again
 			doLayout() {
-				this.broadcast("ClTable", "resize");
+				emitter.emit("resize");
 			},
 
 			done() {
