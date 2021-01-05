@@ -16,7 +16,29 @@
 			</el-row>
 
 			<el-row>
-				<cl-table :columns="columns"></cl-table>
+				<cl-table
+					ref="table"
+					:columns="columns"
+					:default-sort="{ prop: 'price', order: 'descending' }"
+					@selection-change="onSelectionChange"
+				>
+					<template #column-name="{scope}"> -- {{ scope.row.name }} -- </template>
+					<template #slot-btn="{scope}">
+						<el-button type="text" size="mini">xx</el-button>
+					</template>
+
+					<template #append>
+						append
+					</template>
+
+					<template #empty>
+						empty
+					</template>
+				</cl-table>
+			</el-row>
+
+			<el-row>
+				<cl-pagination></cl-pagination>
 			</el-row>
 		</cl-crud>
 	</div>
@@ -82,7 +104,7 @@ const testService = {
 	page: p => {
 		console.log("GET[page]", p);
 		return Promise.resolve({
-			list: userList,
+			list: userList.slice((p.page - 1) * p.size, p.page * p.size),
 			pagination: {
 				page: p.page,
 				size: p.size,
@@ -140,23 +162,39 @@ export default {
 				}
 			],
 			columns: [
+				{ type: "selection", align: "center", width: 60 },
 				{
 					label: "#",
-					type: "index"
+					type: "index",
+					align: "center"
 				},
 				{
 					label: "姓名",
 					prop: "name",
-					align: "center"
+					align: "center",
+					sortable: "custom"
 				},
 				{
 					label: "收入",
 					prop: "price",
-					align: "center"
+					align: "center",
+					sortable: "custom"
 				},
 				{
-					label: "op",
-					align: "center"
+					type: "op",
+					align: "center",
+					layout: [
+						"edit",
+						"delete",
+						"slot-btn",
+						({ h, scope }) => {
+							return (
+								<el-button size="mini" type="text">
+									11
+								</el-button>
+							);
+						}
+					]
 				}
 			]
 		});
@@ -167,7 +205,9 @@ export default {
 	methods: {
 		onLoad({ ctx, app }) {
 			ctx.service(testService).done();
-			app.refresh();
+			app.refresh({
+				size: 2
+			});
 		},
 
 		onQueryChange(value) {
@@ -176,7 +216,33 @@ export default {
 
 		onKeywordChange(value) {
 			console.log("keyword change", value);
+		},
+
+		onSelectionChange(selection) {
+			console.log(selection);
+		},
+
+		onTest(d) {
+			console.log(d);
 		}
 	}
 };
 </script>
+
+<style>
+html,
+body,
+#app {
+	height: 100%;
+	width: 100%;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+}
+</style>
+
+<style lang="scss" scoped>
+.demo {
+	height: 100vh;
+}
+</style>

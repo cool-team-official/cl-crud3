@@ -1,13 +1,9 @@
 import { deepMerge, isArray, isString, isObject, isFunction } from "@/utils";
 import { bootstrap } from "@/app";
 import { __inst } from "@/options";
-import mitt from "mitt";
+import "@/assets/css/index.scss";
 
-const emitter = mitt();
-
-require("@/assets/css/index.scss");
-
-export default function({ __crud }) {
+export default function ({ __crud }) {
 	return {
 		name: "cl-crud",
 		componentName: "ClCrud",
@@ -86,8 +82,8 @@ export default function({ __crud }) {
 		},
 
 		created() {
-			emitter.on("table.selection-change", ({ selection }) => {
-				this.selection = selection;
+			this.$mitt.on("table.selection-change", (selection) => {
+				this.selection.splice(0, this.selection.length, ...selection);
 			});
 		},
 
@@ -126,9 +122,9 @@ export default function({ __crud }) {
 			}
 
 			// Window onresize
-			window.removeEventListener("resize", function() {});
+			window.removeEventListener("resize", function () { });
 			window.addEventListener("resize", () => {
-				emitter.emit("crud.resize");
+				this.$mitt.emit("crud.resize");
 			});
 		},
 
@@ -146,22 +142,22 @@ export default function({ __crud }) {
 
 			// Upsert add
 			rowAdd() {
-				emitter.emit("crud.add");
+				this.$mitt.emit("crud.add");
 			},
 
 			// Upsert edit
 			rowEdit(data) {
-				emitter.emit("crud.edit", data);
+				this.$mitt.emit("crud.edit", data);
 			},
 
 			// Upsert append
 			rowAppend(data) {
-				emitter.emit("crud.append", data);
+				this.$mitt.emit("crud.append", data);
 			},
 
 			// Upsert close
 			rowClose() {
-				emitter.emit("crud.close");
+				this.$mitt.emit("crud.close");
 			},
 
 			// Row delete
@@ -217,12 +213,12 @@ export default function({ __crud }) {
 
 			// Open advSearch
 			openAdvSearch() {
-				emitter.emit("crud.open");
+				this.$mitt.emit("crud.open");
 			},
 
 			// close advSearch
 			closeAdvSearch() {
-				emitter.emit("crud.close");
+				this.$mitt.emit("crud.close");
 			},
 
 			// Refresh params replace
@@ -323,7 +319,7 @@ export default function({ __crud }) {
 
 			// Layout again
 			doLayout() {
-				emitter.emit("resize");
+				this.$mitt.emit("resize");
 			},
 
 			done() {

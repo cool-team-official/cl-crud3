@@ -1,72 +1,53 @@
+import { getCurrentInstance, h, inject, reactive } from 'vue'
+
 export default {
 	name: "cl-pagination",
-	componentName: "ClPagination",
-	inject: ["crud"],
-	props: {
-		props: {
-			type: Object,
-			default: () => {
-				return {};
-			}
-		},
-		on: Object
-	},
-	data() {
-		return {
+
+	setup() {
+		const { refresh } = inject('crud')
+		const { ctx } = getCurrentInstance()
+
+		const state = reactive({
 			total: 0,
 			currentPage: 1,
 			pageSize: 20
-		};
-	},
-	watch: {
-		props: {
-			immediate: true,
-			handler: "setPagination"
-		}
-	},
-	created() {
-		this.$on("crud.refresh", this.setPagination);
-	},
-	methods: {
-		currentChange(index) {
-			this.crud.refresh({
+		})
+
+		const onCurrentChange = (index) => {
+			refresh({
 				page: index
 			});
-		},
-		sizeChange(size) {
-			this.crud.refresh({
+		}
+
+		const onSizeChange = (size) => {
+			refresh({
 				page: 1,
 				size
 			});
-		},
-		setPagination(res) {
+		}
+
+		const setPagination = (res) => {
 			if (res) {
-				this.currentPage = res.currentPage || res.page || 1;
-				this.pageSize = res.pageSize || res.size || 20;
-				this.total = res.total | 0;
+				state.currentPage = res.currentPage || res.page || 1;
+				state.pageSize = res.pageSize || res.size || 20;
+				state.total = res.total | 0;
 			}
 		}
-	},
-	render() {
-		return (
-			<el-pagination
-				{...{
-					on: {
-						"size-change": this.sizeChange,
-						"current-change": this.currentChange,
-						...this.on
-					},
-					props: {
-						background: true,
-						layout: "total, sizes, prev, pager, next, jumper",
-						"page-sizes": [10, 20, 30, 40, 50, 100],
-						...this.props,
-						total: this.total,
-						"current-page": this.currentPage,
-						"page-size": this.pageSize
-					}
-				}}
-			/>
-		);
+
+		ctx.$mitt.on('crud.refresh', ({ pagination }) => {
+			setPagination(pagination)
+		})
+
+		return () => {
+			const ElPagination = <el-pagination background page-sizes={[10, 20, 30, 40, 50, 100]} layout={"total, sizes, prev, pager, next, jumper"}></el-pagination>
+
+			return h(ElPagination, {
+				total: state.total,
+				"current-page": state.currentPage,
+				"page-size": state.pageSize,
+				onSizeChange,
+				onCurrentChange
+			})
+		}
 	}
 };

@@ -1,5 +1,6 @@
 import { isFunction, isString, cloneDeep, isObject } from "./index";
 import { __inst, __plugins, __vue } from "../options";
+import { h } from 'vue'
 
 /**
  * Parse JSX, filter params
@@ -7,11 +8,11 @@ import { __inst, __plugins, __vue } from "../options";
  * @param {{scope,prop,children}} options
  */
 const parse_jsx = (vnode, options = {}) => {
-	const { scope, prop, $scopedSlots, children = [] } = options;
+	const { scope, prop, slots, children = [] } = options;
 	const h = __inst.$createElement;
 
 	if (vnode.name.indexOf("slot-") == 0) {
-		let rn = $scopedSlots[vnode.name];
+		let rn = slots[vnode.name];
 
 		if (rn) {
 			return rn({ scope });
@@ -77,16 +78,14 @@ const parse_jsx = (vnode, options = {}) => {
  * @param {*} vnode
  * @param {*} options
  */
-export function renderNode(vnode, { prop, scope, $scopedSlots }) {
-	const h = __inst.$createElement;
-
+export function renderNode(vnode, { prop, scope, slots }) {
 	if (!vnode) {
 		return null;
 	}
 
 	// When slot or tagName
 	if (isString(vnode)) {
-		return parse_jsx({ name: vnode }, { scope, $scopedSlots });
+		return parse_jsx({ name: vnode }, { scope, slots });
 	}
 
 	// When customeize render function
@@ -167,7 +166,7 @@ export function renderNode(vnode, { prop, scope, $scopedSlots }) {
 
 				return parse_jsx(vnode, { prop, scope, children });
 			} else {
-				return parse_jsx(vnode, { prop, scope, $scopedSlots });
+				return parse_jsx(vnode, { prop, scope, slots });
 			}
 		} else {
 			console.error("Component name is null");

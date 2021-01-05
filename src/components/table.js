@@ -1,6 +1,6 @@
 import { renderNode } from "@/utils/vnode";
 import { isNull } from "@/utils";
-import { h, inject } from "vue";
+import { getCurrentInstance, h, inject, nextTick, onMounted, reactive } from "vue";
 
 export default {
 	name: "cl-table",
@@ -11,80 +11,128 @@ export default {
 			required: true,
 			default: () => []
 		},
-		on: {
-			type: Object,
-			default: () => {
-				return {};
-			}
-		},
-		props: {
-			type: Object,
-			default: () => {
-				return {};
+	},
+
+	data() {
+		return {
+			sort: {
+				prop: '',
+				order: ''
 			}
 		}
 	},
-	data() {
-		return {
-			maxHeight: null,
-			data: [],
-			emit: {}
-		};
-	},
-	created() {
-		const { params } = inject("crud");
-		// Get default sort
-		const { order, prop } = this.props["default-sort"] || {};
-
-		// Set request params
-		params.order = !order ? "" : order === "descending" ? "desc" : "asc";
-		params.prop = prop;
-
-		// Crud event
-		this.$mitt.on("crud.resize", () => {
-			this.calcMaxHeight();
-		});
-
-		// Crud refresh
-		this.$mitt.on("crud.refresh", ({ list }) => {
-			this.data = list;
-		});
-	},
-	mounted() {
-		this.emptyRender();
-		this.calcMaxHeight();
-		this.onEmit();
-	},
 
 	methods: {
-		columnRender() {
-			return this.columns
+		changeSort(prop, order) {
+			if (order === "desc") {
+				order = "descending";
+			}
+
+			if (order === "asc") {
+				order = "ascending";
+			}
+
+			this.$refs["table"].sort(this.sort.prop, "");
+			this.$refs["table"].sort(prop, order);
+
+			this.sort = {
+				prop,
+				order
+			};
+		}
+	},
+
+	setup(props, { slots }) {
+		const crud = inject("crud");
+		const { ctx } = getCurrentInstance()
+
+		const state = reactive({
+			maxHeight: null,
+			data: [],
+		})
+
+		// Render el-table-column
+		const renderColumn = () => {
+			return props.columns
 				.filter(e => !e.hidden)
 				.map((item, index) => {
 					const deep = item => {
-						let params = {
-							props: item,
-							on: item.on
-						};
+						// el-table-column
+						const ElTableColumn = <el-table-column key={`crud-table-column-${index}`}></el-table-column>
 
-						// If op
+						// Op
 						if (item.type === "op") {
-							return this.opRender(item);
-						}
-
-						// Default
-						if (!item.type || item.type === "expand") {
-							params.slots = {
+							return h(ElTableColumn, {
+								label: "操作",
+								width: "160px",
+								...item
+							}, {
 								default: scope => {
-									// Column-slot
-									let slot = this.$slots[`column-${item.prop}`];
+									const render = () => {
+										return (item.layout || ["edit", "delete"]).map(vnode => {
+											if (["edit", "update", "delete"].includes(vnode)) {
+												// Get permission
+												const perm = crud.getPermission(vnode);
 
+												if (perm) {
+													let clickEvent = () => { };
+													let buttonText = null;
+
+													switch (vnode) {
+														case "edit":
+														case "update":
+															clickEvent = crud.rowEdit;
+															buttonText = "编辑";
+															break;
+														case "delete":
+															clickEvent = crud.rowDelete;
+															buttonText = "删除";
+															break;
+													}
+
+													return (
+														<el-button
+															size="mini"
+															type="text"
+															onClick={() => {
+																clickEvent(scope.row);
+															}}>
+															{buttonText}
+														</el-button>
+													);
+												}
+											} else {
+												// Use custom render
+												return renderNode(vnode, { scope, slots });
+											}
+										});
+									}
+
+									return <div class="cl-table__op">{render()}</div>
+								}
+							})
+						}
+						// Index, Expand, Selection
+						else if (['selection', 'index', 'expand'].includes(item.type)) {
+							return h(ElTableColumn, item)
+						}
+						// Default
+						else {
+							return h(ElTableColumn, {
+								...item
+							}, {
+								default: scope => {
+									// Scope data
 									let newScope = {
 										...scope,
 										...item
 									};
 
+									// Value
 									let value = scope.row[item.prop];
+
+									// Column-slot
+									let slot = slots[`column-${item.prop}`];
 
 									if (slot) {
 										// Use slot
@@ -113,20 +161,10 @@ export default {
 											let data = item.dict.find(d => d.value == value);
 
 											if (data) {
+												const ElTag = <el-tag disable-transitions size="small" effect="dark"></el-tag>
+
 												// Use el-tag
-												return (
-													<el-tag
-														{...{
-															props: {
-																size: "small",
-																"disable-transitions": true,
-																effect: "dark",
-																...data
-															}
-														}}>
-														{data.label}
-													</el-tag>
-												);
+												return h(ElTag, data, data.label)
 											} else {
 												return value;
 											}
@@ -142,7 +180,7 @@ export default {
 									}
 								},
 								header: scope => {
-									let slot = this.$slots[`header-${item.prop}`];
+									let slot = slots[`header-${item.prop}`];
 
 									if (slot) {
 										return slot({
@@ -152,266 +190,24 @@ export default {
 										return scope.column.label;
 									}
 								}
-							};
+							})
 						}
-
-						// Children element
-						const childrenEl = item.children ? item.children.map(deep) : null;
-
-						console.log(params);
-
-						return (
-							<el-table-column
-								key={`crud-table-column-${index}`}
-								{...item}></el-table-column>
-						);
-					};
+					}
 
 					return deep(item);
-				});
-		},
+				})
+		};
 
-		opRender(item) {
-			const { rowEdit, rowDelete, getPermission } = this.crud;
+		// Emit selection change
+		const onSelectionChange = (selection) => {
+			ctx.$mitt.emit('table.selection-change', selection)
+		}
 
-			if (!item) {
-				return null;
-			}
+		// Calc table max height
+		const calcMaxHeight = () => {
+			const el = crud.$el.parentNode;
 
-			const render = scope => {
-				// Use op layout
-				return (item.layout || ["edit", "delete"]).map(vnode => {
-					if (["edit", "update", "delete"].includes(vnode)) {
-						// Get permission
-						const perm = getPermission(vnode);
-
-						if (perm) {
-							let clickEvent = () => {};
-							let buttonText = null;
-
-							switch (vnode) {
-								case "edit":
-								case "update":
-									clickEvent = rowEdit;
-									buttonText = "编辑";
-									break;
-								case "delete":
-									clickEvent = rowDelete;
-									buttonText = "删除";
-									break;
-							}
-
-							return (
-								<el-button
-									size="mini"
-									type="text"
-									on-click={() => {
-										clickEvent(scope.row);
-									}}>
-									{buttonText}
-								</el-button>
-							);
-						}
-					} else {
-						// Use custom render
-						return renderNode(vnode, { scope, $scopedSlots: this.$scopedSlots });
-					}
-				});
-			};
-
-			return (
-				<el-table-column
-					{...{
-						props: {
-							label: "操作",
-							width: "160px",
-							...item
-						},
-						scopedSlots: {
-							default: scope => {
-								let el = null;
-
-								// Dropdown op
-								if (item.name == "dropdown-menu") {
-									const slot = this.$scopedSlots["table-op-dropdown-menu"];
-									const { width } = item["dropdown-menu"] || {};
-									const items = render(scope).map(e => {
-										return <el-dropdown-item>{e}</el-dropdown-item>;
-									});
-
-									el = (
-										<el-dropdown
-											{...{
-												on,
-												props: {
-													trigger: "click",
-													...item.props
-												}
-											}}>
-											{slot ? (
-												slot({ scope })
-											) : (
-												<span class="el-dropdown-link">
-													<span>更多操作</span>
-													<i class="el-icon-arrow-down el-icon--right"></i>
-												</span>
-											)}
-
-											<el-dropdown-menu
-												style={{ width }}
-												class="cl-crud__op-dropdown-menu"
-												{...{ slot: "dropdown" }}>
-												{items}
-											</el-dropdown-menu>
-										</el-dropdown>
-									);
-								} else {
-									el = render(scope);
-								}
-
-								return <div class="cl-table__op">{el}</div>;
-							}
-						}
-					}}
-				/>
-			);
-		},
-
-		emptyRender() {
-			const empty = this.$slots["table-empty"];
-			const scope = {
-				h: this.$createElement,
-				scope: this
-			};
-
-			if (empty) {
-				this.$slots.empty = () => {
-					return empty(scope)[0];
-				};
-			}
-		},
-
-		appendRender() {
-			return this.$slots["append"];
-		},
-
-		changeSort(prop, order) {
-			if (order === "desc") {
-				order = "descending";
-			}
-
-			if (order === "asc") {
-				order = "ascending";
-			}
-
-			this.$refs["table"].sort(this.table.sort.prop, "");
-			this.$refs["table"].sort(prop, order);
-
-			this.table.sort = {
-				prop,
-				order
-			};
-		},
-
-		sortChange({ prop, order }) {
-			if (order === "descending") {
-				order = "desc";
-			}
-
-			if (order === "ascending") {
-				order = "asc";
-			}
-
-			if (!order) {
-				prop = null;
-			}
-
-			if (this.crud.test.sortLock) {
-				this.crud.refresh({
-					prop,
-					order,
-					page: 1
-				});
-			}
-		},
-
-		clearSelection() {
-			this.$refs["table"].clearSelection();
-		},
-
-		toggleRowSelection(row, selected) {
-			this.$refs["table"].toggleRowSelection(row, selected);
-		},
-
-		toggleAllSelection() {
-			this.$refs["table"].toggleAllSelection();
-		},
-
-		toggleRowExpansion(row, expanded) {
-			this.$refs["table"].toggleRowExpansion(row, expanded);
-		},
-
-		setCurrentRow(row) {
-			this.$refs["table"].setCurrentRow(row);
-		},
-
-		clearSort() {
-			this.$refs["table"].clearSort();
-		},
-
-		clearFilter(columnKey) {
-			this.$refs["table"].clearFilter(columnKey);
-		},
-
-		doLayout() {
-			this.$refs["table"].doLayout();
-		},
-
-		sort(prop, order) {
-			this.$refs["table"].sort(prop, order);
-		},
-
-		select(selection, row) {
-			this.$emit("select", selection, row);
-		},
-
-		selectionChange(selection) {
-			this.dispatch("cl-crud", "table.selection-change", { selection });
-			this.$emit("selection-change", selection);
-		},
-
-		onEmit() {
-			const funcs = [
-				"select",
-				"select-all",
-				"cell-mouse-enter",
-				"cell-mouse-leave",
-				"cell-click",
-				"cell-dblclick",
-				"row-click",
-				"row-contextmenu",
-				"row-dblclick",
-				"header-click",
-				"header-contextmenu",
-				"filter-change",
-				"current-change",
-				"header-dragend",
-				"expand-change"
-			];
-
-			funcs.forEach(name => {
-				this.emit[name] = (...args) => {
-					this.$emit.apply(this, [name, ...args]);
-				};
-			});
-		},
-
-		calcMaxHeight() {
-			const { $el } = inject("crud");
-			return this.$nextTick(() => {
-				const el = $el.parentNode;
-				let { height = "" } = this.props || {};
-
+			return nextTick(() => {
 				if (el) {
 					let rows = el.querySelectorAll(".cl-crud .el-row");
 
@@ -435,39 +231,59 @@ export default {
 						}
 					}
 
-					let h1 = Number(String(height).replace("px", ""));
+					let h1 = Number(String(props.height || 0).replace("px", ""));
 					let h2 = el.clientHeight - h;
 
-					this.maxHeight = h1 > h2 ? h1 : h2;
+					state.maxHeight = h1 > h2 ? h1 : h2;
 				}
 			});
 		}
-	},
 
-	render() {
-		const { loading } = inject("crud");
+		console.log(props)
 
-		return (
-			<div class="cl-table">
-				{
-					<el-table
-						ref="table"
-						data={this.data}
-						v-loading={loading}
-						{...{
-							"selection-change": this.selectionChange,
-							"sort-change": this.sortChange,
-							"max-height": this.maxHeight + "px",
-							border: true,
-							size: "mini",
-							...this.emit,
-							...this.on,
-							...this.props
-						}}>
-						{this.columnRender()}
-					</el-table>
+		// Set default sort
+		if (props.defaultSort) {
+			const { order, prop } = props.defaultSort
+
+			// Set request params
+			crud.params.order = !order ? "" : order === "descending" ? "desc" : "asc";
+			crud.params.prop = prop;
+		}
+
+		// Mounted
+		onMounted(() => {
+			// Crud refresh
+			ctx.$mitt.on("crud.refresh", ({ list }) => {
+				state.data = list;
+			});
+
+			// Resize
+			ctx.$mitt.on('crud.resize', () => {
+				calcMaxHeight()
+			})
+
+			calcMaxHeight()
+		})
+
+		return () => {
+			// el-table
+			const ElTable = <el-table ref="table" border v-loading={crud.loading}></el-table>
+
+			return h(ElTable, {
+				data: state.data,
+				maxHeight: state.maxHeight,
+				onSelectionChange
+			}, {
+				default: () => {
+					return renderColumn()
+				},
+				empty: () => {
+					return slots.empty ? slots.empty(ctx) : null
+				},
+				append: () => {
+					return slots.append ? slots.append(ctx) : null
 				}
-			</div>
-		);
+			})
+		}
 	}
-};
+}
