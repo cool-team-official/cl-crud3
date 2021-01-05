@@ -1,6 +1,6 @@
 import { renderNode } from "@/utils/vnode";
 import { isNull } from "@/utils";
-import { h, inject, nextTick } from "vue";
+import { getCurrentInstance, h, inject, nextTick, onMounted, reactive } from "vue";
 
 export default {
 	name: "cl-table",
@@ -10,18 +10,6 @@ export default {
 			type: Array,
 			required: true,
 			default: () => []
-		},
-		on: {
-			type: Object,
-			default: () => {
-				return {};
-			}
-		},
-		props: {
-			type: Object,
-			default: () => {
-				return {};
-			}
 		}
 	},
 
@@ -30,40 +18,109 @@ export default {
 	data() {
 		return {
 			maxHeight: null,
+			sort: {
+				prop: "",
+				order: ""
+			},
 			data: []
 		};
 	},
 
 	created() {
-		const { params } = this.crud;
+		const { "default-sort": defaultSort } = this.$attrs;
 
-		// Get default sort
-		const { order, prop } = this.$attrs["default-sort"] || {};
+		// Set default sort
+		if (defaultSort) {
+			const { order, prop } = defaultSort;
 
-		// Set request params
-		params.order = !order ? "" : order === "descending" ? "desc" : "asc";
-		params.prop = prop;
+			// Set request params
+			this.crud.params.order = !order ? "" : order === "descending" ? "desc" : "asc";
+			this.crud.params.prop = prop;
+		}
+	},
 
-		// Crud event
-		this.$mitt.on("crud.resize", () => {
-			this.calcMaxHeight();
-		});
-
+	mounted() {
 		// Crud refresh
 		this.$mitt.on("crud.refresh", ({ list }) => {
 			this.data = list;
 		});
-	},
 
-	mounted() {
+		// Resize
+		this.$mitt.on("crud.resize", () => {
+			this.calcMaxHeight();
+		});
+
 		this.calcMaxHeight();
 	},
 
 	methods: {
-		renderColumn() {
-			const { getPermission, rowEdit, rowDelete } = inject("crud");
+		// Change sort
+		changeSort(prop, order) {
+			if (order === "desc") {
+				order = "descending";
+			}
 
-			return this.columns
+			if (order === "asc") {
+				order = "ascending";
+			}
+
+			this.$refs["table"].sort(this.sort.prop, "");
+			this.$refs["table"].sort(prop, order);
+
+			this.sort = {
+				prop,
+				order
+			};
+		},
+
+		// Calc table max height
+		calcMaxHeight() {
+			// cl-crud parent node
+			const el = this.crud.$el.parentNode;
+			// Is Auto height
+			const { height = 0 } = this.$attrs;
+
+			return nextTick(() => {
+				if (el) {
+					let rows = el.querySelectorAll(".cl-crud .el-row");
+
+					if (!rows[0] || !rows[0].isConnected) {
+						return false;
+					}
+
+					let h = 20;
+
+					for (let i = 0; i < rows.length; i++) {
+						let f = true;
+
+						for (let j = 0; j < rows[i].childNodes.length; j++) {
+							if (rows[i].childNodes[j].className == "cl-table") {
+								f = false;
+							}
+						}
+
+						if (f) {
+							h += rows[i].clientHeight + 10;
+						}
+					}
+
+					let h1 = Number(String(height).replace("px", ""));
+					let h2 = el.clientHeight - h;
+					console.log(111);
+
+					this.maxHeight = h1 > h2 ? h1 : h2;
+				}
+			});
+		}
+	},
+
+	setup(props, { slots }) {
+		const crud = inject("crud");
+		const { ctx } = getCurrentInstance();
+
+		// Render el-table-column
+		const renderColumn = () => {
+			return props.columns
 				.filter(e => !e.hidden)
 				.map((item, index) => {
 					const deep = item => {
@@ -90,7 +147,7 @@ export default {
 														["edit", "update", "delete"].includes(vnode)
 													) {
 														// Get permission
-														const perm = getPermission(vnode);
+														const perm = crud.getPermission(vnode);
 
 														if (perm) {
 															let clickEvent = () => {};
@@ -99,11 +156,11 @@ export default {
 															switch (vnode) {
 																case "edit":
 																case "update":
-																	clickEvent = rowEdit;
+																	clickEvent = crud.rowEdit;
 																	buttonText = "编辑";
 																	break;
 																case "delete":
-																	clickEvent = rowDelete;
+																	clickEvent = crud.rowDelete;
 																	buttonText = "删除";
 																	break;
 															}
@@ -121,10 +178,7 @@ export default {
 														}
 													} else {
 														// Use custom render
-														return renderNode(vnode, {
-															scope,
-															slots: this.$slots
-														});
+														return renderNode(vnode, { scope, slots });
 													}
 												}
 											);
@@ -158,7 +212,7 @@ export default {
 										let value = scope.row[item.prop];
 
 										// Column-slot
-										let slot = this.$slots[`column-${item.prop}`];
+										let slot = slots[`column-${item.prop}`];
 
 										if (slot) {
 											// Use slot
@@ -211,7 +265,7 @@ export default {
 										}
 									},
 									header: scope => {
-										let slot = this.$slots[`header-${item.prop}`];
+										let slot = slots[`header-${item.prop}`];
 
 										if (slot) {
 											return slot({
@@ -228,113 +282,36 @@ export default {
 
 					return deep(item);
 				});
-		},
+		};
 
-		changeSort(prop, order) {
-			if (order === "desc") {
-				order = "descending";
-			}
+		// Emit selection change
+		const onSelectionChange = selection => {
+			ctx.$mitt.emit("table.selection-change", selection);
+		};
 
-			if (order === "asc") {
-				order = "ascending";
-			}
+		return () => {
+			// el-table
+			const ElTable = <el-table ref="table" border v-loading={crud.loading}></el-table>;
 
-			this.$refs["table"].sort(prop, order);
-		},
-
-		sortChange({ prop, order }) {
-			if (order === "descending") {
-				order = "desc";
-			}
-
-			if (order === "ascending") {
-				order = "asc";
-			}
-
-			if (!order) {
-				prop = null;
-			}
-
-			if (this.crud.test.sortLock) {
-				this.crud.refresh({
-					prop,
-					order,
-					page: 1
-				});
-			}
-		},
-
-		selectionChange(selection) {
-			this.$mitt.emit("table.selection-change", selection);
-		},
-
-		calcMaxHeight() {
-			const box = this.crud.$el.parentNode;
-
-			return nextTick(() => {
-				if (box) {
-					let rows = box.querySelectorAll(".cl-crud .el-row");
-
-					if (!rows[0] || !rows[0].isConnected) {
-						return false;
-					}
-
-					let h = 20;
-
-					for (let i = 0; i < rows.length; i++) {
-						let f = true;
-
-						for (let j = 0; j < rows[i].childNodes.length; j++) {
-							if (rows[i].childNodes[j].className.includes("el-table")) {
-								f = false;
-							}
-						}
-
-						if (f) {
-							h += rows[i].clientHeight + 10;
-						}
-					}
-
-					let h1 = Number(String(this.$attrs.height || 0).replace("px", ""));
-					let h2 = box.clientHeight - h;
-
-					this.maxHeight = h1 > h2 ? h1 : h2;
-				}
-			});
-		}
-	},
-
-	render() {
-		const { empty, append } = this.$slots;
-		const { loading } = inject("crud");
-
-		const ElTable = (
-			<el-table
-				ref="table"
-				border
-				size="mini"
-				v-loading={loading}
-				data={this.data}></el-table>
-		);
-
-		return h(
-			ElTable,
-			{
-				onSelectionChange: this.selectionChange,
-				onSortChange: this.sortChange,
-				maxHeight: this.maxHeight
-			},
-			{
-				default: () => {
-					return this.renderColumn();
+			return h(
+				ElTable,
+				{
+					data: ctx.data,
+					maxHeight: ctx.maxHeight,
+					onSelectionChange
 				},
-				empty: () => {
-					return empty ? empty(this) : null;
-				},
-				append: () => {
-					return append ? append(this) : null;
+				{
+					default: () => {
+						return renderColumn();
+					},
+					empty: () => {
+						return slots.empty ? slots.empty(ctx) : null;
+					},
+					append: () => {
+						return slots.append ? slots.append(ctx) : null;
+					}
 				}
-			}
-		);
+			);
+		};
 	}
 };

@@ -24,7 +24,7 @@
 				>
 					<template #column-name="{scope}"> -- {{ scope.row.name }} -- </template>
 					<template #slot-btn="{scope}">
-						<el-button type="text" size="mini">xx</el-button>
+						<el-button type="text" size="mini" @click="onClickTest">xx</el-button>
 					</template>
 
 					<template #append>
@@ -205,9 +205,7 @@ export default {
 	methods: {
 		onLoad({ ctx, app }) {
 			ctx.service(testService).done();
-			app.refresh({
-				size: 2
-			});
+			app.refresh({});
 		},
 
 		onQueryChange(value) {
@@ -224,6 +222,10 @@ export default {
 
 		onTest(d) {
 			console.log(d);
+		},
+
+		onClickTest() {
+			this.$refs["table"].changeSort("name", "desc");
 		}
 	}
 };
