@@ -52,24 +52,22 @@
 	.cl-table {
 		width: 100%;
 
-		.el-table {
-			.el-loading-mask {
-				.el-loading-spinner {
-					.el-icon-loading {
-						font-size: 25px;
-						color: #000;
-					}
+		.el-loading-mask {
+			.el-loading-spinner {
+				.el-icon-loading {
+					font-size: 25px;
+					color: #000;
+				}
 
-					.el-loading-text {
-						color: #666;
-						margin-top: 5px;
-					}
+				.el-loading-text {
+					color: #666;
+					margin-top: 5px;
 				}
 			}
+		}
 
-			&.el-loading-parent--relative {
-				box-sizing: border-box;
-			}
+		&.el-loading-parent--relative {
+			box-sizing: border-box;
 		}
 
 		&__op {
@@ -387,6 +385,7 @@
 		}
 
 		.cell {
+			color: #444;
 			font-weight: normal;
 		}
 	}
@@ -402,13 +401,13 @@
 			padding: 0 14px !important;
 		}
 	}
-}
 
-.el-table-filter {
-	margin-top: 5px !important;
+	&-filter {
+		margin-top: 5px !important;
 
-	.el-checkbox__label {
-		font-size: 12px;
+		.el-checkbox__label {
+			font-size: 12px;
+		}
 	}
 }
 

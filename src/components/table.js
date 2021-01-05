@@ -285,7 +285,7 @@ export default {
 						let f = true;
 
 						for (let j = 0; j < rows[i].childNodes.length; j++) {
-							if (rows[i].childNodes[j].className.includes("el-table")) {
+							if (rows[i].childNodes[j].className.includes("cl-table")) {
 								f = false;
 							}
 						}
@@ -310,6 +310,7 @@ export default {
 
 		const ElTable = (
 			<el-table
+				class="cl-table"
 				ref="table"
 				border
 				size="mini"
