@@ -1,5 +1,5 @@
 import { renderNode } from "@/utils/vnode";
-import { isBoolean, throttle } from "@/utils";
+import { isBoolean } from "@/utils";
 import Screen from "@/mixins/screen";
 import { h, nextTick } from "vue";
 
@@ -7,34 +7,43 @@ export default {
 	name: "cl-dialog",
 
 	props: {
+		// Bind value
 		modelValue: {
 			type: Boolean,
 			default: false
 		},
+		// title
 		title: {
 			type: String,
 			default: "对话框"
 		},
-		drag: {
-			type: Boolean,
-			default: true
-		},
+		// el-dialog props
 		props: {
 			type: Object,
 			default: () => {
 				return {};
 			}
 		},
+		// Dialog is drag
+		drag: {
+			type: Boolean,
+			default: true
+		},
+		// rt op btns
 		opList: {
 			type: Array,
 			default: () => ["fullscreen", "close"]
 		},
-		hiddenOp: Boolean
+		// Hidden op
+		hiddenOp: {
+			type: Boolean,
+			default: false
+		}
 	},
 
 	mixins: [Screen],
 
-	emits: ["fullscreen-change"],
+	emits: ["fullscreen-change", "open", "opened", "close", "closed"],
 
 	data() {
 		return {
@@ -44,7 +53,7 @@ export default {
 	},
 
 	watch: {
-		fullscreen: {
+		"props.fullscreen": {
 			immediate: true,
 			handler(val) {
 				this.isFullscreen = val;
@@ -52,16 +61,9 @@ export default {
 		},
 
 		isFullscreen: {
-			immediate: true,
 			handler(val) {
 				this.setDialog();
-
-				// Fullscreen change event
 				this.$emit("fullscreen-change", val);
-
-				if (this.crud) {
-					this.crud.$emit("fullscreen-change");
-				}
 			}
 		},
 
@@ -69,14 +71,6 @@ export default {
 			immediate: true,
 			handler(val) {
 				this.visible = val;
-
-				if (val) {
-					this.dragEvent();
-				} else {
-					setTimeout(() => {
-						this.changeFullscreen(false);
-					}, 300);
-				}
 			}
 		}
 	},
@@ -88,26 +82,44 @@ export default {
 			this.$emit("update:modelValue", false);
 		},
 
+		onOpen() {
+			this.setDialog();
+			this.setDrag();
+			this.$emit("open");
+		},
+
+		onOpened() {
+			this.$emit("opened");
+		},
+
+		onClose() {
+			this.$emit("close");
+			this.isFullscreen = this.props.fullscreen || false;
+		},
+
+		onClosed() {
+			this.$emit("closed");
+		},
+
 		// Change dialog fullscreen status
 		changeFullscreen(val) {
 			this.isFullscreen = isBoolean(val) ? val : !this.isFullscreen;
 		},
 
+		// Set dialog position
 		setDialog() {
 			nextTick(() => {
 				const el = this.$el.querySelector(".el-dialog");
 
 				if (el) {
-					el.style.marginTop = 0;
+					el.style.left = 0;
 
 					if (this.isFullscreen) {
-						el.style = {
-							top: 0,
-							left: 0
-						};
+						el.style.top = 0;
+						el.style.marginBottom = 0;
 					} else {
 						el.style.marginBottom = "50px";
-						el.style.top = this.$attrs.top || "15vh";
+						el.style.top = this.props.top || "15vh";
 					}
 
 					// Set header cursor state
@@ -118,7 +130,8 @@ export default {
 			});
 		},
 
-		dragEvent() {
+		// Set dialog drag
+		setDrag() {
 			nextTick(() => {
 				const dlg = this.$el.querySelector(".el-dialog");
 				const hdr = this.$el.querySelector(".el-dialog__header");
@@ -235,6 +248,7 @@ export default {
 			});
 		},
 
+		// Render dialog header
 		renderHeader() {
 			return this.hiddenOp ? null : (
 				<div class="cl-dialog__header" onDblclick={this.changeFullscreen}>
@@ -276,7 +290,7 @@ export default {
 							// Custom node render
 							else {
 								return renderNode(vnode, {
-									$scopedSlots: this.$slots
+									$slots: this.$slots
 								});
 							}
 						})}
@@ -289,34 +303,39 @@ export default {
 	render() {
 		const ElDialog = (
 			<el-dialog
+				ref="dialog"
 				custom-class={`${this.hiddenOp ? "hidden-header" : ""}`}
 				show-close={false}
+				destroy-on-close
 				v-model={this.visible}></el-dialog>
 		);
 
 		return (
-			this.visible && (
-				<div class="cl-dialog">
-					{h(
-						ElDialog,
-						{
-							...this.props,
-							fullscreen: this.isFullscreen
+			<div class="cl-dialog">
+				{h(
+					ElDialog,
+					{
+						title: this.title,
+						fullscreen: this.isFullscreen,
+						onOpen: this.onOpen,
+						onOpened: this.onOpened,
+						onClose: this.onClose,
+						onClosed: this.onClosed,
+						...this.$attrs
+					},
+					{
+						default: () => {
+							return this.$slots.default ? this.$slots.default() : null;
 						},
-						{
-							default: () => {
-								return this.$slots.default ? this.$slots.default() : null;
-							},
-							title: () => {
-								return this.renderHeader();
-							},
-							footer: () => {
-								return this.$slots.footer ? this.$slots.footer() : null;
-							}
+						title: () => {
+							return this.renderHeader();
+						},
+						footer: () => {
+							return this.$slots.footer ? this.$slots.footer() : null;
 						}
-					)}
-				</div>
-			)
+					}
+				)}
+			</div>
 		);
 	}
 };

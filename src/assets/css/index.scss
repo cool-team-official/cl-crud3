@@ -259,6 +259,8 @@
 
 .cl-dialog {
 	.el-dialog {
+		margin-top: 0 !important;
+
 		&__header {
 			padding: 10px !important;
 			text-align: center;

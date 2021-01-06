@@ -1,6 +1,6 @@
 import { isFunction, isString, cloneDeep, isObject } from "./index";
 import { __inst, __plugins, __vue } from "../options";
-import { h } from 'vue'
+import { h } from "vue";
 
 /**
  * Parse JSX, filter params
@@ -9,7 +9,6 @@ import { h } from 'vue'
  */
 const parse_jsx = (vnode, options = {}) => {
 	const { scope, prop, slots, children = [] } = options;
-	const h = __inst.$createElement;
 
 	if (vnode.name.indexOf("slot-") == 0) {
 		let rn = slots[vnode.name];
@@ -65,8 +64,8 @@ const parse_jsx = (vnode, options = {}) => {
 		// Set default value
 		data.attrs.value = scope[prop];
 		// Add input event
-		data.onInput = (val) => {
-			scope[prop] = val
+		data.onInput = val => {
+			scope[prop] = val;
 		};
 	}
 
@@ -110,12 +109,12 @@ export function renderNode(vnode, { prop, scope, slots }) {
 							let label, value;
 
 							if (isString(e)) {
-								label = value = e
+								label = value = e;
 							} else if (isObject(e)) {
-								label = e.label
-								value = e.value
+								label = e.label;
+								value = e.value;
 							} else {
-								console.error(vnode.name, 'options 参数错误')
+								console.error(vnode.name, "options 参数错误");
 							}
 
 							return (
@@ -134,13 +133,14 @@ export function renderNode(vnode, { prop, scope, slots }) {
 						// el-radio
 						case "el-radio-group":
 							return (
-								<el-radio {...{
-									props: {
-										key: i,
-										label: e.value,
-										...e.props
-									}
-								}}>
+								<el-radio
+									{...{
+										props: {
+											key: i,
+											label: e.value,
+											...e.props
+										}
+									}}>
 									{e.label}
 								</el-radio>
 							);
@@ -148,13 +148,14 @@ export function renderNode(vnode, { prop, scope, slots }) {
 						// el-checkbox
 						case "el-checkbox-group":
 							return (
-								<el-checkbox {...{
-									props: {
-										key: i,
-										label: e.value,
-										...e.props
-									}
-								}}>
+								<el-checkbox
+									{...{
+										props: {
+											key: i,
+											label: e.value,
+											...e.props
+										}
+									}}>
 									{e.label}
 								</el-checkbox>
 							);

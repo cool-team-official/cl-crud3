@@ -53,9 +53,18 @@
 		</cl-crud>
 
 		<!-- <cl-form ref="form"></cl-form> -->
-		<cl-dialog v-model="dialog.visible" @open="onOpen" @close="onClose" @opened="onOpened"
-			>1231231</cl-dialog
+		<cl-dialog
+			v-model="dialog.visible"
+			:props="{
+				fullscreen: false
+			}"
+			@open="onOpen"
+			@opened="onOpened"
+			@close="onClose"
+			@closed="onClosed"
 		>
+			<test />
+		</cl-dialog>
 	</div>
 </template>
 
@@ -167,6 +176,14 @@ const testService = {
 };
 
 export default {
+	components: {
+		test: {
+			render() {
+				return Math.random();
+			}
+		}
+	},
+
 	setup() {
 		const state = reactive({
 			keyword: "",
@@ -222,7 +239,7 @@ export default {
 				filter: true
 			},
 			dialog: {
-				visible: true
+				visible: false
 			}
 		});
 
@@ -274,6 +291,22 @@ export default {
 
 		openDialog() {
 			this.dialog.visible = !this.dialog.visible;
+		},
+
+		onOpen() {
+			console.log("open");
+		},
+
+		onOpened() {
+			console.log("opened");
+		},
+
+		onClose() {
+			console.log("close");
+		},
+
+		onClosed() {
+			console.log("closed");
 		}
 	}
 };
@@ -288,6 +321,11 @@ body,
 	padding: 0;
 	margin: 0;
 	overflow: hidden;
+}
+
+p {
+	padding: 0;
+	margin: 0;
 }
 </style>
 
