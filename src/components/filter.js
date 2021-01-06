@@ -1,6 +1,5 @@
 export default {
 	name: "cl-filter",
-	componentName: "ClFilter",
 	props: {
 		label: String
 	},
@@ -11,7 +10,7 @@ export default {
 					{this.label}
 				</span>
 
-				{this.$slots.default}
+				{this.$slots.default ? this.$slots.default() : null}
 			</div>
 		);
 	}

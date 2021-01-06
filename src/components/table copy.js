@@ -1,10 +1,12 @@
 import { renderNode } from "@/utils/vnode";
 import { isNull } from "@/utils";
-import { h, inject } from "vue";
+import Emitter from "@/mixins/emitter";
 
 export default {
 	name: "cl-table",
-
+	componentName: "ClTable",
+	inject: ["crud"],
+	mixins: [Emitter],
 	props: {
 		columns: {
 			type: Array,
@@ -24,7 +26,6 @@ export default {
 			}
 		}
 	},
-
 	data() {
 		return {
 			maxHeight: null,
@@ -32,40 +33,36 @@ export default {
 			emit: {}
 		};
 	},
-
 	created() {
-		const { params } = inject("crud");
-
 		// Get default sort
 		const { order, prop } = this.props["default-sort"] || {};
 
 		// Set request params
-		params.order = !order ? "" : order === "descending" ? "desc" : "asc";
-		params.prop = prop;
+		this.crud.params.order = !order ? "" : order === "descending" ? "desc" : "asc";
+		this.crud.params.prop = prop;
 
 		// Crud event
-		this.$mitt.on("crud.resize", () => {
+		this.$on("crud.resize", () => {
 			this.calcMaxHeight();
 		});
 
 		// Crud refresh
-		this.$mitt.on("crud.refresh", ({ list }) => {
+		this.$on("crud.refresh", ({ list }) => {
 			this.data = list;
+
 		});
 	},
-
 	mounted() {
 		this.emptyRender();
 		this.calcMaxHeight();
 		this.onEmit();
 	},
-
 	methods: {
 		columnRender() {
 			return this.columns
-				.filter(e => !e.hidden)
+				.filter((e) => !e.hidden)
 				.map((item, index) => {
-					const deep = item => {
+					const deep = (item) => {
 						let params = {
 							props: item,
 							on: item.on
@@ -78,10 +75,10 @@ export default {
 
 						// Default
 						if (!item.type || item.type === "expand") {
-							params.slots = {
-								default: scope => {
+							params.scopedSlots = {
+								default: (scope) => {
 									// Column-slot
-									let slot = this.$slots[`column-${item.prop}`];
+									let slot = this.$scopedSlots[`column-${item.prop}`];
 
 									let newScope = {
 										...scope,
@@ -114,7 +111,7 @@ export default {
 										}
 										// Dict tag
 										else if (item.dict) {
-											let data = item.dict.find(d => d.value == value);
+											let data = item.dict.find((d) => d.value == value);
 
 											if (data) {
 												// Use el-tag
@@ -145,8 +142,8 @@ export default {
 										}
 									}
 								},
-								header: scope => {
-									let slot = this.$slots[`header-${item.prop}`];
+								header: (scope) => {
+									let slot = this.$scopedSlots[`header-${item.prop}`];
 
 									if (slot) {
 										return slot({
@@ -163,9 +160,9 @@ export default {
 						const childrenEl = item.children ? item.children.map(deep) : null;
 
 						return (
-							<el-table-column
-								key={`crud-table-column-${index}`}
-								{...item}></el-table-column>
+							<el-table-column key={`crud-table-column-${index}`} {...params}>
+								{childrenEl}
+							</el-table-column>
 						);
 					};
 
@@ -174,15 +171,15 @@ export default {
 		},
 
 		opRender(item) {
-			const { rowEdit, rowDelete, getPermission } = inject('crud');
+			const { rowEdit, rowDelete, getPermission } = this.crud;
 
 			if (!item) {
 				return null;
 			}
 
-			const render = scope => {
+			const render = (scope) => {
 				// Use op layout
-				return (item.layout || ["edit", "delete"]).map(vnode => {
+				return (item.layout || ["edit", "delete"]).map((vnode) => {
 					if (["edit", "update", "delete"].includes(vnode)) {
 						// Get permission
 						const perm = getPermission(vnode);
@@ -224,18 +221,20 @@ export default {
 			return (
 				<el-table-column
 					{...{
-						label: "操作",
-						width: "160px",
-						...item,
-						slots: {
-							default: scope => {
+						props: {
+							label: "操作",
+							width: "160px",
+							...item
+						},
+						scopedSlots: {
+							default: (scope) => {
 								let el = null;
 
 								// Dropdown op
 								if (item.name == "dropdown-menu") {
-									const slot = this.$slots["table-op-dropdown-menu"];
+									const slot = this.$scopedSlots["table-op-dropdown-menu"];
 									const { width } = item["dropdown-menu"] || {};
-									const items = render(scope).map(e => {
+									const items = render(scope).map((e) => {
 										return <el-dropdown-item>{e}</el-dropdown-item>;
 									});
 
@@ -273,19 +272,19 @@ export default {
 							}
 						}
 					}}
-				></el-table-column>
+				/>
 			);
 		},
 
 		emptyRender() {
-			const empty = this.$slots["table-empty"];
+			const empty = this.$scopedSlots["table-empty"];
 			const scope = {
 				h: this.$createElement,
 				scope: this
 			};
 
 			if (empty) {
-				this.$slots.empty = () => {
+				this.$scopedSlots.empty = () => {
 					return empty(scope)[0];
 				};
 			}
@@ -399,7 +398,7 @@ export default {
 				"expand-change"
 			];
 
-			funcs.forEach(name => {
+			funcs.forEach((name) => {
 				this.emit[name] = (...args) => {
 					this.$emit.apply(this, [name, ...args]);
 				};
@@ -407,10 +406,8 @@ export default {
 		},
 
 		calcMaxHeight() {
-			const { $el } = inject("crud");
-			const el = $el.parentNode;
-
 			return this.$nextTick(() => {
+				const el = this.crud.$el.parentNode;
 				let { height = "" } = this.props || {};
 
 				if (el) {
@@ -446,24 +443,32 @@ export default {
 	},
 
 	render() {
-		const { loading } = inject("crud");
-
 		return (
 			<div class="cl-table">
 				{
 					<el-table
 						ref="table"
 						data={this.data}
-						v-loading={loading}
+						v-loading={this.crud.loading}
 						{...{
-							"selection-change": this.selectionChange,
-							"sort-change": this.sortChange,
-							"max-height": this.maxHeight + "px",
-							border: true,
-							size: "mini",
-							...this.emit,
-							...this.on,
-							...this.props
+							on: {
+								"selection-change": this.selectionChange,
+								"sort-change": this.sortChange,
+								...this.emit,
+								...this.on
+							},
+							props: {
+								"max-height": this.maxHeight + "px",
+								border: true,
+								size: "mini",
+								...this.props
+							},
+							scopedSlots: {
+								...this.$scopedSlots
+							},
+							slots: {
+								...this.$slots
+							}
 						}}>
 						{this.columnRender()}
 					</el-table>

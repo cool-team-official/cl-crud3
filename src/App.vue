@@ -6,6 +6,11 @@
 				<cl-add-btn></cl-add-btn>
 				<cl-multi-delete-btn></cl-multi-delete-btn>
 				<cl-query :list="query" @change="onQueryChange"></cl-query>
+				<cl-filter label="是否过滤">
+					<el-switch v-model="selects.filter"></el-switch>
+				</cl-filter>
+				<el-button size="mini" @click="openForm">自定义表单</el-button>
+				<el-button size="mini" @click="openDialog">自定义对话框</el-button>
 				<cl-flex1 />
 				<cl-search-key
 					field="name"
@@ -18,21 +23,24 @@
 			<el-row>
 				<cl-table
 					ref="table"
+					:border="false"
 					:columns="columns"
 					:default-sort="{ prop: 'price', order: 'descending' }"
+					row-key="id"
 					@selection-change="onSelectionChange"
 				>
-					<template #column-name="{scope}"> -- {{ scope.row.name }} -- </template>
-					<template #slot-btn="{scope}">
-						<el-button type="text" size="mini" @click="onClickTest">xx</el-button>
+					<template #column-name="{scope}"> ` {{ scope.row.name }} ` </template>
+
+					<template #slot-btn>
+						<el-button type="text" size="mini" @click="onClickTest">测试按钮</el-button>
 					</template>
 
 					<template #append>
-						append
+						<p style="text-align: center">Append</p>
 					</template>
 
 					<template #empty>
-						empty
+						自定义空态
 					</template>
 				</cl-table>
 			</el-row>
@@ -40,7 +48,14 @@
 			<el-row>
 				<cl-pagination></cl-pagination>
 			</el-row>
+
+			{{ dialog.visible }}
 		</cl-crud>
+
+		<!-- <cl-form ref="form"></cl-form> -->
+		<cl-dialog v-model="dialog.visible" @open="onOpen" @close="onClose" @opened="onOpened"
+			>1231231</cl-dialog
+		>
 	</div>
 </template>
 
@@ -56,7 +71,21 @@ const userList = [
 		price: 75.99,
 		salesRate: 52.2,
 		status: 1,
-		images: ["https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/1.jpg"]
+		images: ["https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/1.jpg"],
+		children: [
+			{
+				id: 6,
+				name: "刘二",
+				process: 42.2,
+				createTime: "2019年09月02日",
+				price: 232.49,
+				salesRate: 52.2,
+				status: 1,
+				images: [
+					"https://cool-comm.oss-cn-shenzhen.aliyuncs.com/show/imgs/chat/avatar/1.jpg"
+				]
+			}
+		]
 	},
 	{
 		id: 2,
@@ -169,10 +198,13 @@ export default {
 					align: "center"
 				},
 				{
-					label: "姓名",
-					prop: "name",
-					align: "center",
-					sortable: "custom"
+					label: "多级表头",
+					children: [
+						{
+							label: "姓名",
+							prop: "name"
+						}
+					]
 				},
 				{
 					label: "收入",
@@ -183,20 +215,15 @@ export default {
 				{
 					type: "op",
 					align: "center",
-					layout: [
-						"edit",
-						"delete",
-						"slot-btn",
-						({ h, scope }) => {
-							return (
-								<el-button size="mini" type="text">
-									11
-								</el-button>
-							);
-						}
-					]
+					layout: ["edit", "delete", "slot-btn"]
 				}
-			]
+			],
+			selects: {
+				filter: true
+			},
+			dialog: {
+				visible: true
+			}
 		});
 
 		return state;
@@ -225,7 +252,28 @@ export default {
 		},
 
 		onClickTest() {
-			this.$refs["table"].changeSort("name", "desc");
+			this.$refs["table"].clearSort();
+		},
+
+		openForm() {
+			this.$refs["form"].open({
+				props: {
+					title: "自定义表单"
+				},
+				items: [
+					{
+						label: "姓名",
+						prop: "name",
+						component: {
+							name: "el-input"
+						}
+					}
+				]
+			});
+		},
+
+		openDialog() {
+			this.dialog.visible = !this.dialog.visible;
 		}
 	}
 };

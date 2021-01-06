@@ -1,12 +1,16 @@
 import { renderNode } from "@/utils/vnode";
 import { isBoolean, throttle } from "@/utils";
-import Screen from '@/mixins/screen'
+import Screen from "@/mixins/screen";
+import { h, nextTick } from "vue";
 
 export default {
 	name: "cl-dialog",
-	componentName: "ClDialog",
+
 	props: {
-		visible: Boolean,
+		modelValue: {
+			type: Boolean,
+			default: false
+		},
 		title: {
 			type: String,
 			default: "对话框"
@@ -21,48 +25,52 @@ export default {
 				return {};
 			}
 		},
-		on: {
-			type: Object,
-			default: () => {
-				return {};
-			}
-		},
 		opList: {
 			type: Array,
 			default: () => ["fullscreen", "close"]
 		},
 		hiddenOp: Boolean
 	},
+
 	mixins: [Screen],
+
+	emits: ["fullscreen-change"],
+
+	data() {
+		return {
+			visible: false,
+			isFullscreen: false
+		};
+	},
+
 	watch: {
-		"props.fullscreen"(f) {
-			if (this.$el && this.$el.querySelector) {
-				const el = this.$el.querySelector(".el-dialog");
-
-				if (el) {
-					if (f) {
-						el.style = {
-							top: 0,
-							left: 0
-						};
-					} else {
-						el.style.marginBottom = "50px";
-					}
-
-					// Set header cursor state
-					el.querySelector(".el-dialog__header").style.cursor = f ? "text" : "move";
-				}
-			}
-
-			if (this.crud) {
-				// Fullscreen change event
-				this.crud.$emit("fullscreen-change");
+		fullscreen: {
+			immediate: true,
+			handler(val) {
+				this.isFullscreen = val;
 			}
 		},
-		visible: {
+
+		isFullscreen: {
 			immediate: true,
-			handler(f) {
-				if (f) {
+			handler(val) {
+				this.setDialog();
+
+				// Fullscreen change event
+				this.$emit("fullscreen-change", val);
+
+				if (this.crud) {
+					this.crud.$emit("fullscreen-change");
+				}
+			}
+		},
+
+		modelValue: {
+			immediate: true,
+			handler(val) {
+				this.visible = val;
+
+				if (val) {
 					this.dragEvent();
 				} else {
 					setTimeout(() => {
@@ -74,25 +82,44 @@ export default {
 	},
 
 	methods: {
-		open() {
-			this.$emit("update:visible", true);
-			this.$emit("open");
+		// Avoid double close event
+		close() {
+			this.visible = false;
+			this.$emit("update:modelValue", false);
 		},
 
-		// Avoid double close event
-		close: throttle(function () {
-			this.$emit("update:visible", false);
-			this.$emit("close");
-		}, 10),
-
 		// Change dialog fullscreen status
-		changeFullscreen(f) {
-			this.$set(this.props, "fullscreen", isBoolean(f) ? f : !this.props.fullscreen);
-			this.$emit("update:props:fullscreen", this.props.fullscreen);
+		changeFullscreen(val) {
+			this.isFullscreen = isBoolean(val) ? val : !this.isFullscreen;
+		},
+
+		setDialog() {
+			nextTick(() => {
+				const el = this.$el.querySelector(".el-dialog");
+
+				if (el) {
+					el.style.marginTop = 0;
+
+					if (this.isFullscreen) {
+						el.style = {
+							top: 0,
+							left: 0
+						};
+					} else {
+						el.style.marginBottom = "50px";
+						el.style.top = this.$attrs.top || "15vh";
+					}
+
+					// Set header cursor state
+					el.querySelector(".el-dialog__header").style.cursor = this.isFullscreen
+						? "text"
+						: "move";
+				}
+			});
 		},
 
 		dragEvent() {
-			this.$nextTick(() => {
+			nextTick(() => {
 				const dlg = this.$el.querySelector(".el-dialog");
 				const hdr = this.$el.querySelector(".el-dialog__header");
 
@@ -100,9 +127,9 @@ export default {
 					return false;
 				}
 
-				hdr.onmousedown = (e) => {
+				hdr.onmousedown = e => {
 					// Props
-					const { fullscreen, top = "15vh" } = this.props;
+					const { fullscreen, top = "15vh" } = this.$attrs;
 
 					// Body size
 					const { clientWidth, clientHeight } = document.body;
@@ -120,7 +147,7 @@ export default {
 						// Determine height of the box is too large
 						let marginTop = 0;
 
-						if (["vh", "%"].some((e) => top.includes(e))) {
+						if (["vh", "%"].some(e => top.includes(e))) {
 							marginTop = clientHeight * (parseInt(top) / 100);
 						}
 
@@ -141,11 +168,6 @@ export default {
 					} else {
 						hdr.style.cursor = "move";
 					}
-
-					// Set el-dialog style, hidden scroller
-					dlg.style.marginTop = 0;
-					dlg.style.marginBottom = 0;
-					dlg.style.top = dlg.style.top || top;
 
 					// Distance
 					const dis = {
@@ -183,7 +205,7 @@ export default {
 					const maxTop = clientHeight - dlg.clientHeight - pad;
 
 					// Start move
-					document.onmousemove = function (e) {
+					document.onmousemove = function(e) {
 						let left = e.clientX - dis.left + box.left;
 						let top = e.clientY - dis.top + box.top;
 
@@ -205,7 +227,7 @@ export default {
 					};
 
 					// Clear event
-					document.onmouseup = function () {
+					document.onmouseup = function() {
 						document.onmousemove = null;
 						document.onmouseup = null;
 					};
@@ -213,48 +235,40 @@ export default {
 			});
 		},
 
-		headerRender() {
+		renderHeader() {
 			return this.hiddenOp ? null : (
-				<div
-					class="cl-dialog__header"
-					{...{
-						on: {
-							dblclick: () => {
-								this.changeFullscreen();
-							}
-						}
-					}}>
+				<div class="cl-dialog__header" onDblclick={this.changeFullscreen}>
 					{/* title */}
 					<span class="cl-dialog__title">{this.title}</span>
 					{/* op button */}
 					<div class="cl-dialog__headerbtn">
-						{this.opList.map((vnode) => {
+						{this.opList.map(vnode => {
 							// Fullscreen
 							if (vnode === "fullscreen") {
 								// Hidden fullscreen btn
-								if (this.screen === 'xs') {
-									return null
+								if (this.screen === "xs") {
+									return null;
 								}
 
 								// Show diff icon
-								if (this.props.fullscreen) {
+								if (this.isFullscreen) {
 									return (
-										<button class="minimize" on-click={this.changeFullscreen}>
+										<button class="minimize" onClick={this.changeFullscreen}>
 											<i class="el-icon-minus" />
 										</button>
-									)
+									);
 								} else {
 									return (
-										<button class="maximize" on-click={this.changeFullscreen}>
+										<button class="maximize" onClick={this.changeFullscreen}>
 											<i class="el-icon-full-screen" />
 										</button>
-									)
+									);
 								}
 							}
 							// Close
 							else if (vnode === "close") {
 								return (
-									<button class="close" on-click={this.close}>
+									<button class="close" onClick={this.close}>
 										<i class="el-icon-close" />
 									</button>
 								);
@@ -262,49 +276,46 @@ export default {
 							// Custom node render
 							else {
 								return renderNode(vnode, {
-									$scopedSlots: this.$scopedSlots
+									$scopedSlots: this.$slots
 								});
 							}
 						})}
 					</div>
 				</div>
 			);
-		},
-
-		slotsRender() {
-			const { default: body = [], footer = [] } = this.$slots || {};
-
-			return {
-				body: body[0],
-				footer: footer[0]
-			};
 		}
 	},
 
 	render() {
-		const { body, footer } = this.slotsRender();
+		const ElDialog = (
+			<el-dialog
+				custom-class={`${this.hiddenOp ? "hidden-header" : ""}`}
+				show-close={false}
+				v-model={this.visible}></el-dialog>
+		);
 
 		return (
 			this.visible && (
-				<el-dialog
-					custom-class={`cl-dialog ${this.hiddenOp ? "hidden-header" : ""}`}
-					{...{
-						props: {
+				<div class="cl-dialog">
+					{h(
+						ElDialog,
+						{
 							...this.props,
-							fullscreen: this.isFullscreen ? true : this.props.fullscreen,
-							visible: this.visible,
-							"show-close": false
+							fullscreen: this.isFullscreen
 						},
-						on: {
-							...this.on,
-							open: this.open,
-							close: this.close
+						{
+							default: () => {
+								return this.$slots.default ? this.$slots.default() : null;
+							},
+							title: () => {
+								return this.renderHeader();
+							},
+							footer: () => {
+								return this.$slots.footer ? this.$slots.footer() : null;
+							}
 						}
-					}}>
-					<template slot="title">{this.headerRender()}</template>
-					{body}
-					<template slot="footer">{footer}</template>
-				</el-dialog>
+					)}
+				</div>
 			)
 		);
 	}

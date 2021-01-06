@@ -65,8 +65,8 @@ const parse_jsx = (vnode, options = {}) => {
 		// Set default value
 		data.attrs.value = scope[prop];
 		// Add input event
-		data.on.input = (val) => {
-			__inst.$set(scope, prop, val);
+		data.onInput = (val) => {
+			scope[prop] = val
 		};
 	}
 
