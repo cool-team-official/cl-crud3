@@ -1,11 +1,6 @@
-import Emitter from "@/mixins/emitter";
-import { __inst } from "@/options";
-
 export default {
 	name: "cl-upsert",
-	componentName: "ClUpsert",
 	inject: ["crud"],
-	mixins: [Emitter],
 	props: {
 		// Bind value
 		value: {
@@ -55,6 +50,7 @@ export default {
 		// Hook by submit { isEdit, data, { next, done, close } }
 		onSubmit: Function
 	},
+	emits: ['open'],
 	data() {
 		return {
 			isEdit: false,
@@ -71,10 +67,10 @@ export default {
 		}
 	},
 	created() {
-		this.$on("crud.add", this.add);
-		this.$on("crud.append", this.append);
-		this.$on("crud.edit", this.edit);
-		this.$on("crud.close", this.close);
+		this.$mitt.on("crud.add", this.add);
+		this.$mitt.on("crud.append", this.append);
+		this.$mitt.on("crud.edit", this.edit);
+		this.$mitt.on("crud.close", this.close);
 	},
 	mounted() {
 		this.inject();
@@ -291,11 +287,7 @@ export default {
 
 			// Hook by onSubmit
 			if (this.onSubmit) {
-				// Get mount variable
-				const { $refs } = __inst;
-
 				this.onSubmit(this.isEdit, data, {
-					$refs,
 					done,
 					next,
 					close: () => {
@@ -331,12 +323,7 @@ export default {
 			<div class="cl-upsert">
 				<cl-form
 					ref="form"
-					v-model={this.form}
-					{...{
-						scopedSlots: {
-							...this.$scopedSlots
-						}
-					}}></cl-form>
+					v-model={this.form}>{this.$slots.default ? this.$slots.default() : null}</cl-form>
 			</div>
 		);
 	}

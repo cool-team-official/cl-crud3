@@ -1,6 +1,6 @@
 import { isFunction, isString, cloneDeep, isObject } from "./index";
 import { __inst, __plugins, __vue } from "../options";
-import { h } from "vue";
+import { getCurrentInstance, h, resolveComponent } from "vue";
 
 /**
  * Parse JSX, filter params
@@ -8,68 +8,40 @@ import { h } from "vue";
  * @param {{scope,prop,children}} options
  */
 const parse_jsx = (vnode, options = {}) => {
-	const { scope, prop, slots, children = [] } = options;
+	const { scope, prop, slots, children } = options;
 
+	// Use slot
 	if (vnode.name.indexOf("slot-") == 0) {
 		let rn = slots[vnode.name];
 
 		if (rn) {
 			return rn({ scope });
+		} else {
+			return <cl-error-message title={`组件渲染失败，未找到插槽：${vnode.name}`} />;
 		}
 	}
 
+	// Use component
 	if (vnode.render) {
-		if (!__inst.$root.$options.components[vnode.name]) {
-			__vue.component(vnode.name, cloneDeep(vnode));
+		const { ctx } = getCurrentInstance();
+
+		if (!ctx.$root.$options.components[vnode.name]) {
+			ctx.$component(vnode.name, cloneDeep(vnode));
 		}
-
-		// Avoid props prompts { type:null }
-		delete vnode.props;
 	}
-
-	const keys = [
-		"class",
-		"style",
-		"props",
-		"attrs",
-		"domProps",
-		"on",
-		"nativeOn",
-		"directives",
-		"scopedSlots",
-		"slot",
-		"key",
-		"ref",
-		"refInFor"
-	];
 
 	// Avoid loop update
 	let data = cloneDeep(vnode);
 
-	for (let i in data) {
-		if (!keys.includes(i)) {
-			delete data[i];
-		}
-	}
-
 	if (scope) {
-		if (!data.attrs) {
-			data.attrs = {};
-		}
-
-		if (!data.on) {
-			data.on = {};
-		}
-
-		// Set default value
-		data.attrs.value = scope[prop];
 		// Add input event
-		data.onInput = val => {
+		data.modelValue = scope[prop];
+		data.onInput = function(val) {
 			scope[prop] = val;
 		};
 	}
 
-	return h(vnode.name, cloneDeep(data), children);
+	return h(resolveComponent(vnode.name), data, children);
 };
 
 /**
@@ -98,6 +70,10 @@ export function renderNode(vnode, { prop, scope, slots }) {
 			return vnode;
 		}
 
+		if (vnode.type) {
+			vnode.name = vnode.type;
+		}
+
 		if (vnode.name) {
 			// Handle general component
 			if (["el-select", "el-radio-group", "el-checkbox-group"].includes(vnode.name)) {
@@ -114,18 +90,18 @@ export function renderNode(vnode, { prop, scope, slots }) {
 								label = e.label;
 								value = e.value;
 							} else {
-								console.error(vnode.name, "options 参数错误");
+								return (
+									<cl-error-message title={`组件渲染失败，options 参数错误`} />
+								);
 							}
 
 							return (
 								<el-option
 									{...{
-										props: {
-											key: i,
-											label,
-											value,
-											...e.props
-										}
+										key: i,
+										label,
+										value,
+										...e.props
 									}}
 								/>
 							);
@@ -135,11 +111,9 @@ export function renderNode(vnode, { prop, scope, slots }) {
 							return (
 								<el-radio
 									{...{
-										props: {
-											key: i,
-											label: e.value,
-											...e.props
-										}
+										key: i,
+										label: e.value,
+										...e.props
 									}}>
 									{e.label}
 								</el-radio>
@@ -150,11 +124,9 @@ export function renderNode(vnode, { prop, scope, slots }) {
 							return (
 								<el-checkbox
 									{...{
-										props: {
-											key: i,
-											label: e.value,
-											...e.props
-										}
+										key: i,
+										label: e.value,
+										...e.props
 									}}>
 									{e.label}
 								</el-checkbox>
@@ -170,7 +142,7 @@ export function renderNode(vnode, { prop, scope, slots }) {
 				return parse_jsx(vnode, { prop, scope, slots });
 			}
 		} else {
-			console.error("Component name is null");
+			return <cl-error-message title={`组件渲染失败，组件 name 不能为空`} />;
 		}
 	}
 }

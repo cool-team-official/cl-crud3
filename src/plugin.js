@@ -7,6 +7,7 @@ import "@/common";
 export const CRUD = {
 	install(app) {
 		app.config.globalProperties.$mitt = mitt();
+		app.config.globalProperties.$component = app.component
 
 		app.component("cl-crud", crud({}));
 

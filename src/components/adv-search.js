@@ -1,15 +1,12 @@
 import { renderNode } from "@/utils/vnode";
 import { cloneDeep } from "@/utils";
-import Emitter from "@/mixins/emitter";
 import Screen from '@/mixins/screen'
 import Form from "@/utils/form";
 import Parse from "@/utils/parse";
 
 export default {
 	name: "cl-adv-search",
-	componentName: "ClAdvSearch",
 	inject: ["crud"],
-	mixins: [Emitter],
 	props: {
 		// Bind value
 		value: {
@@ -43,10 +40,13 @@ export default {
 		onSearch: Function
 	},
 	mixins: [Screen],
+	emits: ['open', 'close'],
 	data() {
 		return {
 			form: {},
-			visible: false
+			visible: false,
+			saving: false,
+			loading: false
 		};
 	},
 	watch: {
@@ -59,8 +59,8 @@ export default {
 		}
 	},
 	created() {
-		this.$on("crud.open", this.open);
-		this.$on("crud.close", this.close);
+		this.$mitt.on("crud.open", this.open);
+		this.$mitt.on("crud.close", this.close);
 
 		Form.inject.call(this, {
 			form: this.form
@@ -71,7 +71,7 @@ export default {
 		open() {
 			this.items.map((e) => {
 				if (this.form[e.prop] === undefined) {
-					this.$set(this.form, e.prop, e.value);
+					this.form[e.prop, e.value]
 				}
 			});
 
@@ -151,23 +151,14 @@ export default {
 				<el-form
 					ref="form"
 					class="cl-form"
-					{...{
-						props: {
-							size: "small",
-							"label-width": "100px",
-							'label-position': this.isFullscreen ? 'top' : '',
-							disabled: this.saving,
-							model: this.form,
-							...this.props
-						}
-					}}>
+					size="small"
+					label-width="100px"
+					label-position={this.isFullscreen ? 'top' : ''}
+					disabled={this.saving}
+					model={this.form}
+					{...this.props}>
 					<el-row
-						v-loading={this.loading}
-						{...{
-							attrs: {
-								...this["v-loading"]
-							}
-						}}>
+						v-loading={this.loading}>
 						{this.items.map((e, i) => {
 							return (
 								!Parse("hidden", {
@@ -175,23 +166,15 @@ export default {
 									scope: this.form
 								}) && (
 									<el-col
-										{...{
-											props: {
-												key: i,
-												span: 24,
-												...e
-											}
-										}}>
+										key={i}
+										span={24}
+										{...e}>
 										<el-form-item
-											{...{
-												props: {
-													...e
-												}
-											}}>
+											{...e}>
 											{renderNode(e.component, {
 												prop: e.prop,
 												scope: this.form,
-												$scopedSlots: this.$scopedSlots
+												slots: this.$slots
 											})}
 										</el-form-item>
 									</el-col>
@@ -215,19 +198,14 @@ export default {
 		return (
 			<div class="cl-adv-search">
 				<el-drawer
+					v-model={this.visible}
+					title="高级搜索"
+					direction="rtl"
+					size={this.isFullscreen ? '100%' : "500px"}
 					{...{
-						props: {
-							visible: this.visible,
-							title: "高级搜索",
-							direction: "rtl",
-							size: this.isFullscreen ? '100%' : "500px",
-							...this.props
-						},
-						on: {
-							"update:visible": () => {
-								this.close();
-							},
-							...this.on
+						...this.props,
+						"onUpdate:visible": () => {
+							this.close();
 						}
 					}}>
 					<div class="cl-adv-search__container">{this.renderForm()}</div>
@@ -238,13 +216,9 @@ export default {
 								return (
 									<el-button
 										{...{
-											props: {
-												size: this.props.size || "small",
-												type: e === "search" ? "primary" : ""
-											},
-											on: {
-												click: this[e]
-											}
+											size: this.props.size || "small",
+											type: e === "search" ? "primary" : null,
+											onClick: this[e]
 										}}>
 										{ButtonText[e]}
 									</el-button>
@@ -252,13 +226,13 @@ export default {
 							} else {
 								return renderNode(e, {
 									scope: this.form,
-									$scopedSlots: this.$scopedSlots
+									slots: this.$slots
 								});
 							}
 						})}
 					</div>
 				</el-drawer>
-			</div>
+			</div >
 		);
 	}
 };

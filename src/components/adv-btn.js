@@ -1,6 +1,5 @@
 export default {
 	name: "cl-adv-btn",
-	componentName: "ClAdvBtn",
 	inject: ["crud"],
 	props: {
 		// el-button props
@@ -10,17 +9,11 @@ export default {
 		return (
 			<div class="cl-adv-btn">
 				<el-button
-					{...{
-						props: {
-							size: "mini",
-							...this.props
-						},
-						on: {
-							click: this.crud.openAdvSearch
-						}
-					}}>
+					size="mini"
+					onClick={this.crud.openAdvSearch}
+					{...this.props}>
 					<i class="el-icon-search" />
-					{this.$slots.default || "高级搜索"}
+					{this.$slots.default ? this.$slots.default() : "高级搜索"}
 				</el-button>
 			</div>
 		);

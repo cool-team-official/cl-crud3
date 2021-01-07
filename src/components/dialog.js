@@ -43,12 +43,12 @@ export default {
 
 	mixins: [Screen],
 
-	emits: ["fullscreen-change", "open", "opened", "close", "closed"],
+	emits: ["fullscreen-change", "open", "opened", "close", "closed", "update:modelValue"],
 
 	data() {
 		return {
-			visible: false,
-			isFullscreen: false
+			isFullscreen: false,
+			visible: false
 		};
 	},
 
@@ -78,7 +78,6 @@ export default {
 	methods: {
 		// Avoid double close event
 		close() {
-			this.visible = false;
 			this.$emit("update:modelValue", false);
 		},
 
@@ -94,6 +93,7 @@ export default {
 
 		onClose() {
 			this.$emit("close");
+			this.close();
 			this.isFullscreen = this.props.fullscreen || false;
 		},
 
@@ -106,26 +106,35 @@ export default {
 			this.isFullscreen = isBoolean(val) ? val : !this.isFullscreen;
 		},
 
+		// Get el-dialog element
+		getEl() {
+			const dlg = document.querySelector(`.cl-dialog--${this.$.uid}`);
+			const hdr = dlg.querySelector(".el-dialog__header");
+
+			return {
+				dlg,
+				hdr
+			};
+		},
+
 		// Set dialog position
 		setDialog() {
 			nextTick(() => {
-				const el = this.$el.querySelector(".el-dialog");
+				const { dlg, hdr } = this.getEl();
 
-				if (el) {
-					el.style.left = 0;
+				if (dlg) {
+					dlg.style.left = 0;
 
 					if (this.isFullscreen) {
-						el.style.top = 0;
-						el.style.marginBottom = 0;
+						dlg.style.top = 0;
+						dlg.style.marginBottom = 0;
 					} else {
-						el.style.marginBottom = "50px";
-						el.style.top = this.props.top || "15vh";
+						dlg.style.marginBottom = "50px";
+						dlg.style.top = this.props.top || "15vh";
 					}
 
 					// Set header cursor state
-					el.querySelector(".el-dialog__header").style.cursor = this.isFullscreen
-						? "text"
-						: "move";
+					hdr.style.cursor = this.isFullscreen ? "text" : "move";
 				}
 			});
 		},
@@ -133,8 +142,7 @@ export default {
 		// Set dialog drag
 		setDrag() {
 			nextTick(() => {
-				const dlg = this.$el.querySelector(".el-dialog");
-				const hdr = this.$el.querySelector(".el-dialog__header");
+				const { dlg, hdr } = this.getEl();
 
 				if (!hdr) {
 					return false;
@@ -218,7 +226,7 @@ export default {
 					const maxTop = clientHeight - dlg.clientHeight - pad;
 
 					// Start move
-					document.onmousemove = function(e) {
+					document.onmousemove = function (e) {
 						let left = e.clientX - dis.left + box.left;
 						let top = e.clientY - dis.top + box.top;
 
@@ -240,7 +248,7 @@ export default {
 					};
 
 					// Clear event
-					document.onmouseup = function() {
+					document.onmouseup = function () {
 						document.onmousemove = null;
 						document.onmouseup = null;
 					};
@@ -301,41 +309,41 @@ export default {
 	},
 
 	render() {
+		const { default: body, footer } = this.$slots;
+
 		const ElDialog = (
 			<el-dialog
 				ref="dialog"
-				custom-class={`${this.hiddenOp ? "hidden-header" : ""}`}
+				title={this.title}
+				custom-class={`cl-dialog cl-dialog--${this.$.uid} ${this.hiddenOp ? "hidden-header" : ""
+					}`}
+				onOpen={this.onOpen}
+				onOpened={this.onOpened}
+				onClose={this.onClose}
+				onClosed={this.onClosed}
 				show-close={false}
-				destroy-on-close
 				v-model={this.visible}></el-dialog>
 		);
 
 		return (
-			<div class="cl-dialog">
-				{h(
-					ElDialog,
-					{
-						title: this.title,
-						fullscreen: this.isFullscreen,
-						onOpen: this.onOpen,
-						onOpened: this.onOpened,
-						onClose: this.onClose,
-						onClosed: this.onClosed,
-						...this.$attrs
+			h(
+				ElDialog,
+				{
+					...this.props,
+					fullscreen: this.isFullscreen
+				},
+				{
+					default: () => {
+						return body ? body() : null;
 					},
-					{
-						default: () => {
-							return this.$slots.default ? this.$slots.default() : null;
-						},
-						title: () => {
-							return this.renderHeader();
-						},
-						footer: () => {
-							return this.$slots.footer ? this.$slots.footer() : null;
-						}
+					title: () => {
+						return this.renderHeader();
+					},
+					footer: () => {
+						return footer ? footer() : null;
 					}
-				)}
-			</div>
+				}
+			)
 		);
 	}
 };

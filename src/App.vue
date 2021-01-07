@@ -18,6 +18,7 @@
 					@change="onKeywordChange"
 					:field-list="fieldList"
 				></cl-search-key>
+				<cl-adv-btn />
 			</el-row>
 
 			<el-row>
@@ -36,7 +37,7 @@
 					</template>
 
 					<template #append>
-						<p style="text-align: center">Append</p>
+						<p style="text-align: center;margin: 10px">Append</p>
 					</template>
 
 					<template #empty>
@@ -49,13 +50,22 @@
 				<cl-pagination></cl-pagination>
 			</el-row>
 
-			{{ dialog.visible }}
+			<cl-upsert ref="upsert" :items="upsert.items"></cl-upsert>
+			<cl-adv-search ref="advSearch" :items="adv.items"></cl-adv-search>
 		</cl-crud>
 
-		<!-- <cl-form ref="form"></cl-form> -->
+		<!-- 自定义表单 -->
+		<cl-form ref="form">
+			<template #slot-input="{ scope }">
+				<el-input v-model="scope.t2" placeholder="slot-*"></el-input>
+			</template>
+		</cl-form>
+
+		<!-- 自定义对话框 -->
 		<cl-dialog
 			v-model="dialog.visible"
 			:props="{
+				'append-to-body': true,
 				fullscreen: false
 			}"
 			@open="onOpen"
@@ -69,7 +79,7 @@
 </template>
 
 <script>
-import { reactive } from "vue";
+import { reactive, h, resolveComponent } from "vue";
 
 const userList = [
 	{
@@ -175,6 +185,14 @@ const testService = {
 	}
 };
 
+const TestInput = {
+	name: "test-input",
+
+	render() {
+		return 111;
+	}
+};
+
 export default {
 	components: {
 		test: {
@@ -240,6 +258,52 @@ export default {
 			},
 			dialog: {
 				visible: false
+			},
+			upsert: {
+				items: [
+					{
+						label: "姓名",
+						prop: "name",
+						component: {
+							name: "el-input"
+						},
+						rules: {
+							required: true,
+							message: "姓名不能为空"
+						}
+					},
+					{
+						label: "是否显示存款",
+						prop: "isPrice",
+						flex: false,
+						component: {
+							name: "el-switch"
+						}
+					},
+					{
+						label: "存款",
+						prop: "price",
+						hidden: "@isPrice",
+						component: {
+							name: "el-input-number"
+						},
+						rules: {
+							required: true,
+							message: "存款不能为空"
+						}
+					}
+				]
+			},
+			adv: {
+				items: [
+					{
+						label: "姓名",
+						prop: "name",
+						component: {
+							name: "el-input"
+						}
+					}
+				]
 			}
 		});
 
@@ -279,13 +343,40 @@ export default {
 				},
 				items: [
 					{
-						label: "姓名",
-						prop: "name",
+						label: "标签名渲染",
+						prop: "t1",
 						component: {
-							name: "el-input"
+							name: "el-input",
+							placeholder: "el-input、el-date-picker、el-select..."
+						},
+						rules: {
+							required: true,
+							message: "姓名不能为空"
+						}
+					},
+					{
+						label: "插槽渲染",
+						prop: "t2",
+						component: {
+							name: "slot-input"
 						}
 					}
-				]
+				],
+				on: {
+					open() {
+						console.log("cl-form open");
+					},
+
+					close(action, done) {
+						console.log("cl-form close", action);
+						done();
+					},
+
+					submit(data, { close, done }) {
+						console.log(data);
+						close();
+					}
+				}
 			});
 		},
 
@@ -307,6 +398,11 @@ export default {
 
 		onClosed() {
 			console.log("closed");
+		},
+
+		onBeforeClose(done) {
+			console.log("close before");
+			done();
 		}
 	}
 };

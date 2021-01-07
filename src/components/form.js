@@ -1,11 +1,11 @@
-import { deepMerge, isFunction } from "@/utils";
+import { deepMerge, isFunction, cloneDeep } from "@/utils";
 import { renderNode } from "@/utils/vnode";
 import Form from "@/utils/form";
 import Parse from "@/utils/parse";
 import { __inst } from "@/options";
 import Emitter from "@/mixins/emitter";
 import Screen from "@/mixins/screen";
-import cloneDeep from "clone-deep";
+import { h, nextTick } from "vue";
 
 export default {
 	name: "cl-form",
@@ -20,6 +20,7 @@ export default {
 			}
 		}
 	},
+	emits: ["update:modelValue"],
 	data() {
 		return {
 			visible: false,
@@ -35,7 +36,6 @@ export default {
 				},
 				props: {
 					fullscreen: false,
-					"append-to-body": true,
 					"close-on-click-modal": false,
 					"destroy-on-close": true
 				},
@@ -65,7 +65,7 @@ export default {
 		form: {
 			immediate: true,
 			handler(val) {
-				this.$emit("input", val);
+				this.$emit("update:modelValue", val);
 			}
 		}
 	},
@@ -92,15 +92,15 @@ export default {
 			// Preset form
 			if (options.form) {
 				for (let i in options.form) {
-					this.$set(this.form, i, options.form[i]);
+					this.form[i] = options.form[i];
 				}
 			}
 
 			// Set form data by items
-			this.conf.items.map((e) => {
+			this.conf.items.map(e => {
 				if (e.prop) {
 					// Priority use form data
-					this.$set(this.form, e.prop, this.form[e.prop] || cloneDeep(e.value));
+					this.form[e.prop] = this.form[e.prop] || cloneDeep(e.value);
 				}
 			});
 
@@ -148,7 +148,7 @@ export default {
 
 		submit() {
 			// Validate form
-			this.$refs["form"].validate(async (valid) => {
+			this.$refs["form"].validate(async valid => {
 				if (valid) {
 					this.saving = true;
 
@@ -163,7 +163,7 @@ export default {
 						let d = cloneDeep(this.form);
 
 						// Filter hidden data
-						this.conf.items.forEach((e) => {
+						this.conf.items.forEach(e => {
 							if (e._hidden) {
 								delete d[e.prop];
 							}
@@ -200,114 +200,115 @@ export default {
 		formRender() {
 			const { props, items } = this.conf;
 
-			return (
+			// el-form-item list
+			const List = items.map((e, i) => {
+				// Is hidden
+				e._hidden = Parse("hidden", {
+					value: e.hidden,
+					scope: this.form,
+					data: this.conf._data
+				});
+
+				if (e._hidden) {
+					return null;
+				}
+
+				// Is flex
+				if (e.flex === undefined) {
+					e.flex = true;
+				}
+
+				return (
+					<el-col key={`form-item-${i}`} span={24} {...e}>
+						{e.component &&
+							h(
+								<el-form-item></el-form-item>,
+								{
+									label: e.label,
+									prop: e.prop,
+									rules: e.rules,
+									...e.props
+								},
+								{
+									/* Redefine label */
+									label: () => {
+										return (
+											<span
+												onClick={() => {
+													this.collapseItem(e);
+												}}>
+												{e.label}
+											</span>
+										);
+									},
+									/* Component */
+									default: () => {
+										return (
+											<div class="cl-form-item">
+												{["prepend", "component", "append"].map(name => {
+													return (
+														e[name] && (
+															<div
+																v-show={!e.collapse}
+																class={[
+																	`cl-form-item__${name}`,
+																	{
+																		"is-flex": e.flex
+																	}
+																]}>
+																{renderNode(e[name], {
+																	prop: e.prop,
+																	scope: this.form,
+																	slots: this.$slots
+																})}
+															</div>
+														)
+													);
+												})}
+
+												{/* Collapse button */}
+												<div
+													class="cl-form-item__collapse"
+													v-show={e.collapse}
+													onClick={() => {
+														this.collapseItem(e);
+													}}>
+													<el-divider content-position="center">
+														点击展开，查看更多
+														<i class="el-icon-arrow-down"></i>
+													</el-divider>
+												</div>
+											</div>
+										);
+									}
+								}
+							)}
+					</el-col>
+				);
+			});
+
+			// el-row
+			const ElRow = (
+				<el-row gutter={10} v-loading={this.loading}>
+					{List}
+				</el-row>
+			);
+
+			// el-form
+			const ElForm = (
 				<el-form
 					ref="form"
 					class="cl-form"
-					{...{
-						props: {
-							size: "small",
-							"label-width": "100px",
-							"label-position": this.isFullscreen ? "top" : "",
-							disabled: this.saving,
-							model: this.form,
-							...props
-						}
-					}}>
-					<el-row gutter={10} v-loading={this.loading}>
-						{items.map((e, i) => {
-							// Is hidden
-							e._hidden = Parse("hidden", {
-								value: e.hidden,
-								scope: this.form,
-								data: this.conf._data
-							});
-
-							// Is flex
-							if (e.flex === undefined) {
-								e.flex = true;
-							}
-
-							return (
-								!e._hidden && (
-									<el-col
-										key={`form-item-${i}`}
-										{...{
-											props: {
-												key: i,
-												span: 24,
-												...e
-											}
-										}}>
-										{e.component && (
-											<el-form-item
-												{...{
-													props: {
-														label: e.label,
-														prop: e.prop,
-														rules: e.rules,
-														...e.props
-													}
-												}}>
-												{/* Redefine label */}
-												<template slot="label">
-													<span
-														on-click={() => {
-															this.collapseItem(e);
-														}}>
-														{e.label}
-													</span>
-												</template>
-
-												{/* Form item */}
-												<div class="cl-form-item">
-													{/* Component */}
-													{["prepend", "component", "append"].map(
-														(name) => {
-															return (
-																e[name] && (
-																	<div
-																		class={[
-																			`cl-form-item__${name}`,
-																			{
-																				"is-flex": e.flex
-																			}
-																		]}
-																		v-show={!e.collapse}>
-																		{renderNode(e[name], {
-																			prop: e.prop,
-																			scope: this.form,
-																			$scopedSlots: this
-																				.$scopedSlots
-																		})}
-																	</div>
-																)
-															);
-														}
-													)}
-
-													{/* Collapse button */}
-													<div
-														class="cl-form-item__collapse"
-														v-show={e.collapse}
-														on-click={() => {
-															this.collapseItem(e);
-														}}>
-														<el-divider content-position="center">
-															点击展开，查看更多
-															<i class="el-icon-arrow-down"></i>
-														</el-divider>
-													</div>
-												</div>
-											</el-form-item>
-										)}
-									</el-col>
-								)
-							);
-						})}
-					</el-row>
+					size="small"
+					label-width="100px"
+					label-position={this.isFullscreen ? "top" : ""}
+					disabled={this.saving}
+					model={this.form}>
+					{ElRow}
 				</el-form>
 			);
+
+			return h(ElForm, props);
 		},
 
 		footerRender() {
@@ -315,77 +316,62 @@ export default {
 			const { size = "small" } = this.conf.props;
 
 			return (
-				<div class="cl-form__footer">
-					{!hidden &&
-						layout.map((vnode) => {
-							if (vnode == "confirm" || vnode == "save") {
-								return (
-									<el-button
-										{...{
-											props: {
-												size,
-												type: "success",
-												disabled: this.loading,
-												loading: this.saving
-											},
-											on: {
-												click: this.submit
-											}
-										}}>
-										{confirmButtonText}
-									</el-button>
-								);
-							} else if (vnode == "cancel" || vnode == "close") {
-								return (
-									<el-button
-										{...{
-											props: {
-												size
-											},
-											on: {
-												click: () => {
-													this.beforeClose(vnode);
-												}
-											}
-										}}>
-										{cancelButtonText}
-									</el-button>
-								);
-							} else {
-								return renderNode(vnode, {
-									scope: this.form,
-									$scopedSlots: this.$scopedSlots
-								});
-							}
-						})}
-				</div>
+				!hidden &&
+				layout.map(vnode => {
+					if (vnode == "confirm" || vnode == "save") {
+						return (
+							<el-button
+								size={size}
+								type="success"
+								disabled={this.loading}
+								loading={this.saving}
+								onClick={this.submit}>
+								{confirmButtonText}
+							</el-button>
+						);
+					} else if (vnode == "cancel" || vnode == "close") {
+						return (
+							<el-button
+								size={size}
+								onClick={() => {
+									this.beforeClose(vnode);
+								}}>
+								{cancelButtonText}
+							</el-button>
+						);
+					} else {
+						return renderNode(vnode, {
+							scope: this.form,
+							slots: this.$slots
+						});
+					}
+				})
 			);
 		}
 	},
 
 	render() {
-		let { props, hdr } = this.conf;
+		const { props, hdr } = this.conf;
+		const ClDialog = <cl-dialog v-model={this.visible}></cl-dialog>;
 
 		return (
 			<div class="cl-form">
-				<cl-dialog
-					visible={this.visible}
-					title={props.title}
-					opList={hdr.opList}
-					{...{
-						props: {
-							props
+				{h(
+					ClDialog,
+					{
+						opList: hdr.opList,
+						props,
+						...props
+					},
+					{
+						default: () => {
+							return <div class="cl-form__container">{this.formRender()}</div>;
 						},
-						on: {
-							"update:visible": () => {
-								this.beforeClose();
-							},
-							"update:props:fullscreen": (f) => (props.fullscreen = f)
+						footer: () => {
+							return <div class="cl-form__footer">{this.footerRender()}</div>;
 						}
-					}}>
-					<div class="cl-form__container">{this.formRender()}</div>
-					<template slot="footer">{this.footerRender()}</template>
-				</cl-dialog>
+					}
+				)}
 			</div>
 		);
 	}
