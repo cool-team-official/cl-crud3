@@ -297,10 +297,27 @@ export default {
 			adv: {
 				items: [
 					{
-						label: "姓名",
-						prop: "name",
+						label: "输入框",
+						prop: "v1",
 						component: {
 							name: "el-input"
+						}
+					},
+					{
+						label: "下拉框",
+						prop: "v2",
+						component: {
+							name: "el-select",
+							options: [
+								{
+									label: "选项1",
+									value: 1
+								},
+								{
+									label: "选项2",
+									value: 2
+								}
+							]
 						}
 					}
 				]

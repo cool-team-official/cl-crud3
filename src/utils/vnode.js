@@ -36,12 +36,16 @@ const parse_jsx = (vnode, options = {}) => {
 	if (scope) {
 		// Add input event
 		data.modelValue = scope[prop];
-		data.onInput = function(val) {
+		data['onUpdate:modelValue'] = function (val) {
 			scope[prop] = val;
 		};
 	}
 
-	return h(resolveComponent(vnode.name), data, children);
+	return h(resolveComponent(vnode.name), data, {
+		default: () => {
+			return children
+		}
+	});
 };
 
 /**
