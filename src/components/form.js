@@ -143,7 +143,7 @@ export default {
 		},
 
 		clear() {
-			this.clearForm();
+			this.$refs["form"].resetFields();
 		},
 
 		submit() {

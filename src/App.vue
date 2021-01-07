@@ -299,6 +299,7 @@ export default {
 					{
 						label: "输入框",
 						prop: "v1",
+						value: "v1",
 						component: {
 							name: "el-input"
 						}
@@ -306,6 +307,7 @@ export default {
 					{
 						label: "下拉框",
 						prop: "v2",
+						value: 1,
 						component: {
 							name: "el-select",
 							options: [

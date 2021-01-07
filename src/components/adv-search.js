@@ -1,6 +1,6 @@
 import { renderNode } from "@/utils/vnode";
 import { cloneDeep } from "@/utils";
-import Screen from '@/mixins/screen'
+import Screen from "@/mixins/screen";
 import Form from "@/utils/form";
 import Parse from "@/utils/parse";
 
@@ -30,7 +30,7 @@ export default {
 		// Op button ['search', 'reset', 'clear', 'close']
 		opList: {
 			type: Array,
-			default: () => ["close", "search"]
+			default: () => ["search", "reset", "clear", "close"]
 		},
 		// Hooks by open { data, { next } }
 		onOpen: Function,
@@ -40,7 +40,7 @@ export default {
 		onSearch: Function
 	},
 	mixins: [Screen],
-	emits: ['open', 'close'],
+	emits: ["open", "close", "reset", "clear"],
 	data() {
 		return {
 			form: {},
@@ -69,14 +69,14 @@ export default {
 	methods: {
 		// Open drawer
 		open() {
-			this.items.map((e) => {
+			this.items.map(e => {
 				if (this.form[e.prop] === undefined) {
-					this.form[e.prop, e.value]
+					this.form[e.prop] = e.value;
 				}
 			});
 
 			// Open event
-			const next = (data) => {
+			const next = data => {
 				this.visible = true;
 
 				if (data) {
@@ -111,10 +111,7 @@ export default {
 
 		// Reset data
 		reset() {
-			this.items.map((e) => {
-				this.form[e.prop] = e.value;
-			});
-
+			this.$refs["form"].resetFields();
 			this.$emit("reset");
 		},
 
@@ -129,7 +126,7 @@ export default {
 			const params = cloneDeep(this.form);
 
 			// Search event
-			const next = (params) => {
+			const next = params => {
 				this.crud.refresh({
 					...params,
 					page: 1
@@ -153,24 +150,19 @@ export default {
 					class="cl-form"
 					size="small"
 					label-width="100px"
-					label-position={this.isFullscreen ? 'top' : ''}
+					label-position={this.isFullscreen ? "top" : ""}
 					disabled={this.saving}
 					model={this.form}
 					{...this.props}>
-					<el-row
-						v-loading={this.loading}>
+					<el-row v-loading={this.loading}>
 						{this.items.map((e, i) => {
 							return (
 								!Parse("hidden", {
 									value: e.hidden,
 									scope: this.form
 								}) && (
-									<el-col
-										key={i}
-										span={24}
-										{...e}>
-										<el-form-item
-											{...e}>
+									<el-col key={i} span={24} {...e}>
+										<el-form-item {...e}>
 											{renderNode(e.component, {
 												prop: e.prop,
 												scope: this.form,
@@ -201,7 +193,7 @@ export default {
 					v-model={this.visible}
 					title="高级搜索"
 					direction="rtl"
-					size={this.isFullscreen ? '100%' : "500px"}
+					size={this.isFullscreen ? "100%" : "500px"}
 					{...{
 						...this.props,
 						"onUpdate:visible": () => {
@@ -211,7 +203,7 @@ export default {
 					<div class="cl-adv-search__container">{this.renderForm()}</div>
 
 					<div class="cl-adv-search__footer">
-						{this.opList.map((e) => {
+						{this.opList.map(e => {
 							if (ButtonText[e]) {
 								return (
 									<el-button
@@ -232,7 +224,7 @@ export default {
 						})}
 					</div>
 				</el-drawer>
-			</div >
+			</div>
 		);
 	}
 };
