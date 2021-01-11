@@ -1,7 +1,6 @@
 import { deepMerge, isFunction } from "@/utils";
-import { __plugins, __inst } from "@/options";
 
-export const bootstrap = (that) => {
+export const bootstrap = that => {
 	// eslint-disable-next-line
 	const { conf, refresh, event, id, fn } = that;
 
@@ -11,7 +10,7 @@ export const bootstrap = (that) => {
 		}
 	};
 
-	const ctx = (data) => {
+	const ctx = data => {
 		deepMerge(that, data);
 
 		return ctx;
@@ -19,13 +18,13 @@ export const bootstrap = (that) => {
 
 	ctx.id = id;
 
-	ctx.conf = (d) => {
+	ctx.conf = d => {
 		deepMerge(conf, d);
 
 		return ctx;
 	};
 
-	ctx.service = (d) => {
+	ctx.service = d => {
 		that.service = d;
 
 		if (fn.permission) {
@@ -35,7 +34,7 @@ export const bootstrap = (that) => {
 		return ctx;
 	};
 
-	ctx.permission = (x) => {
+	ctx.permission = x => {
 		if (isFunction(x)) {
 			that.permission = x(that);
 		} else {
@@ -51,7 +50,7 @@ export const bootstrap = (that) => {
 		return ctx;
 	};
 
-	["on", "once"].forEach((n) => {
+	["on", "once"].forEach(n => {
 		ctx[n] = (name, cb) => {
 			event[name] = {
 				mode: n,

@@ -1,9 +1,9 @@
-import { inject } from 'vue'
+import { inject } from "vue";
 
 export default {
 	name: "cl-refresh-btn",
 	setup(props, { slots }) {
-		const { refresh } = inject('crud')
+		const { refresh } = inject("crud");
 
 		return () => {
 			return (
@@ -16,6 +16,6 @@ export default {
 					{slots.default ? slots.default() : "刷新"}
 				</el-button>
 			);
-		}
+		};
 	}
 };

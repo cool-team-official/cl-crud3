@@ -155,13 +155,13 @@ export default {
 					model={this.form}
 					{...this.props}>
 					<el-row v-loading={this.loading}>
-						{this.items.map((e, i) => {
+						{this.items.map(e => {
 							return (
 								!Parse("hidden", {
 									value: e.hidden,
 									scope: this.form
 								}) && (
-									<el-col key={i} span={24} {...e}>
+									<el-col span={24} {...e}>
 										<el-form-item {...e}>
 											{renderNode(e.component, {
 												prop: e.prop,

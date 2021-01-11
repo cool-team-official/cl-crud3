@@ -1,4 +1,4 @@
-import { isString, isBoolean, isFunction, isArray } from "./index";
+import { isString, isBoolean, isFunction } from "./index";
 
 /**
  * parse hidden
@@ -7,7 +7,7 @@ import { isString, isBoolean, isFunction, isArray } from "./index";
  * 3 :[prop] is bind form[prop] value
  * @param {*} value
  */
-export default function (method, { value, scope, data = {} }) {
+export default function(method, { value, scope, data = {} }) {
 	if (data) {
 		data.isAdd = !data.isEdit;
 	}

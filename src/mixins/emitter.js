@@ -1,5 +1,5 @@
 function broadcast(componentName, eventName, params) {
-	this.$children.forEach((child) => {
+	this.$children.forEach(child => {
 		let name = child.$options._componentTag;
 
 		if (name === componentName) {

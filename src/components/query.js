@@ -1,5 +1,5 @@
-import { isArray } from '@/utils';
-import { inject, reactive, watchEffect } from 'vue'
+import { isArray } from "@/utils";
+import { inject, reactive, watchEffect } from "vue";
 
 export default {
 	name: "cl-query",
@@ -15,17 +15,17 @@ export default {
 			default: "query"
 		},
 		multiple: Boolean,
-		callback: Function,
+		callback: Function
 	},
 
-	emits: ['change'],
+	emits: ["change"],
 
 	setup(props, { emit }) {
-		const { refresh } = inject('crud')
+		const { refresh } = inject("crud");
 
 		const state = reactive({
 			list: []
-		})
+		});
 
 		// Set query data
 		const setList = () => {
@@ -42,11 +42,11 @@ export default {
 			}
 
 			// Default active
-			state.list = (props.list || []).map((e) => {
-				e.active = arr.some((v) => v === e.value)
+			state.list = (props.list || []).map(e => {
+				e.active = arr.some(v => v === e.value);
 				return e;
 			});
-		}
+		};
 
 		// select item
 		const selectItem = (event, item) => {
@@ -56,14 +56,14 @@ export default {
 				if (props.multiple) {
 					item.active = true;
 				} else {
-					state.list.map((e) => {
+					state.list.map(e => {
 						e.active = e.value == item.value;
 					});
 				}
 			}
 
 			// Filter active
-			const selection = state.list.filter((e) => e.active).map((e) => e.value);
+			const selection = state.list.filter(e => e.active).map(e => e.value);
 			// Handle multiple
 			const value = props.multiple ? selection : selection[0];
 
@@ -75,19 +75,17 @@ export default {
 					[props.field]: value
 				});
 
-				emit('change', value)
+				emit("change", value);
 			}
 
 			// Stop
 			event.preventDefault();
-		}
+		};
 
-		// watch props.value and props.list 
-		watchEffect(
-			() => {
-				setList()
-			}
-		)
+		// watch props.value and props.list
+		watchEffect(() => {
+			setList();
+		});
 
 		return () => {
 			return (
@@ -97,7 +95,7 @@ export default {
 							<button
 								class={{ "is-active": item.active }}
 								key={index}
-								onClick={(event) => {
+								onClick={event => {
 									selectItem(event, item);
 								}}>
 								<span>{item.label}</span>
@@ -105,7 +103,7 @@ export default {
 						);
 					})}
 				</div>
-			)
-		}
+			);
+		};
 	}
 };

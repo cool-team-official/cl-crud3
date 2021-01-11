@@ -194,7 +194,11 @@ export default {
 												);
 
 												// Use el-tag
-												return h(ElTag, data, data.label);
+												return h(ElTag, data, {
+													default() {
+														return data.label;
+													}
+												});
 											} else {
 												return value;
 											}
@@ -271,6 +275,10 @@ export default {
 
 		// Calc el-table max-height
 		calcMaxHeight() {
+			if (!this.crud.$el) {
+				return false;
+			}
+
 			const box = this.crud.$el.parentNode;
 
 			return nextTick(() => {
@@ -287,7 +295,7 @@ export default {
 						let f = true;
 
 						for (let j = 0; j < rows[i].childNodes.length; j++) {
-							if (rows[i].childNodes[j].className.includes("cl-table")) {
+							if ((rows[i].childNodes[j].className || "").includes("cl-table")) {
 								f = false;
 							}
 						}

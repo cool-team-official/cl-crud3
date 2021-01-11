@@ -1,6 +1,5 @@
 import { deepMerge, isArray, isString, isObject, isFunction } from "@/utils";
 import { bootstrap } from "@/app";
-import { __inst } from "@/options";
 import "@/assets/css/index.scss";
 
 export default function ({ __crud }) {
@@ -82,7 +81,7 @@ export default function ({ __crud }) {
 		},
 
 		created() {
-			this.$mitt.on("table.selection-change", (selection) => {
+			this.$mitt.on("table.selection-change", selection => {
 				this.selection.splice(0, this.selection.length, ...selection);
 			});
 		},
@@ -93,33 +92,6 @@ export default function ({ __crud }) {
 
 			// Hooks by load
 			this.$emit("load", res);
-
-			// Register event
-			for (let i in this.event) {
-				let d = this.event[i];
-				let mode = null;
-				let callback = null;
-
-				if (isObject(d)) {
-					mode = d.mode;
-					callback = d.callback;
-				} else {
-					mode = "on";
-					callback = d;
-				}
-
-				if (!["on", "once"].includes(mode)) {
-					return console.error(`Event[${i}].mode must be (on / once)`);
-				}
-
-				if (!isFunction(callback)) {
-					return console.error(`Event[${i}].callback is not a function`);
-				}
-
-				__inst[`$${mode}`](i, data => {
-					callback(data, res);
-				});
-			}
 
 			// Window onresize
 			window.removeEventListener("resize", function () { });
@@ -228,6 +200,7 @@ export default function ({ __crud }) {
 				let b = { ...pagination, ...search, ...sort };
 
 				for (let i in b) {
+					// eslint-disable-next-line
 					if (a.hasOwnProperty(i)) {
 						if (i != b[i]) {
 							a[`_${b[i]}`] = a[i];

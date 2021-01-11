@@ -22,7 +22,7 @@
 	}
 
 	.cl-search-key {
-		display: flex;
+		display: inline-flex;
 		margin-left: 10px;
 
 		&__input {
@@ -116,7 +116,7 @@
 	}
 
 	.cl-filter {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		margin: 0 10px;
 

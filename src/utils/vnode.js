@@ -1,5 +1,4 @@
 import { isFunction, isString, cloneDeep, isObject } from "./index";
-import { __inst, __plugins, __vue } from "../options";
 import { getCurrentInstance, h, resolveComponent } from "vue";
 
 /**
@@ -7,8 +6,8 @@ import { getCurrentInstance, h, resolveComponent } from "vue";
  * @param {*} vnode
  * @param {{scope,prop,children}} options
  */
-const parse_jsx = (vnode, options = {}) => {
-	const { scope, prop, slots, children } = options;
+const parse_jsx = (vnode, options) => {
+	const { scope, prop, slots, children } = options || [];
 
 	// Use slot
 	if (vnode.name.indexOf("slot-") == 0) {
@@ -36,14 +35,14 @@ const parse_jsx = (vnode, options = {}) => {
 	if (scope) {
 		// Add input event
 		data.modelValue = scope[prop];
-		data['onUpdate:modelValue'] = function (val) {
+		data["onUpdate:modelValue"] = function(val) {
 			scope[prop] = val;
 		};
 	}
 
 	return h(resolveComponent(vnode.name), data, {
 		default: () => {
-			return children
+			return children;
 		}
 	});
 };
@@ -74,70 +73,59 @@ export function renderNode(vnode, { prop, scope, slots }) {
 			return vnode;
 		}
 
-		if (vnode.type) {
-			vnode.name = vnode.type;
-		}
-
 		if (vnode.name) {
 			// Handle general component
-			if (["el-select", "el-radio-group", "el-checkbox-group"].includes(vnode.name)) {
+			const keys = ["el-select", "el-radio-group", "el-checkbox-group"];
+
+			if (keys.includes(vnode.name)) {
 				// Append component children
 				const children = (vnode.options || []).map((e, i) => {
-					switch (vnode.name) {
-						// el-select
-						case "el-select":
-							let label, value;
+					if (vnode.name == "el-select") {
+						let label, value;
 
-							if (isString(e)) {
-								label = value = e;
-							} else if (isObject(e)) {
-								label = e.label;
-								value = e.value;
-							} else {
-								return (
-									<cl-error-message title={`组件渲染失败，options 参数错误`} />
-								);
-							}
+						if (isString(e)) {
+							label = value = e;
+						} else if (isObject(e)) {
+							label = e.label;
+							value = e.value;
+						} else {
+							return <cl-error-message title={`组件渲染失败，options 参数错误`} />;
+						}
 
-							return (
-								<el-option
-									{...{
-										key: i,
-										label,
-										value,
-										...e.props
-									}}
-								/>
-							);
-
-						// el-radio
-						case "el-radio-group":
-							return (
-								<el-radio
-									{...{
-										key: i,
-										label: e.value,
-										...e.props
-									}}>
-									{e.label}
-								</el-radio>
-							);
-
-						// el-checkbox
-						case "el-checkbox-group":
-							return (
-								<el-checkbox
-									{...{
-										key: i,
-										label: e.value,
-										...e.props
-									}}>
-									{e.label}
-								</el-checkbox>
-							);
-
-						default:
-							return null;
+						return (
+							<el-option
+								{...{
+									key: i,
+									label,
+									value,
+									...e.props
+								}}
+							/>
+						);
+					} else if (vnode.name == "el-radio-group") {
+						return (
+							<el-radio
+								{...{
+									key: i,
+									label: e.value,
+									...e.props
+								}}>
+								{e.label}
+							</el-radio>
+						);
+					} else if (vnode.name == "el-checkbox-group") {
+						return (
+							<el-checkbox
+								{...{
+									key: i,
+									label: e.value,
+									...e.props
+								}}>
+								{e.label}
+							</el-checkbox>
+						);
+					} else {
+						return null;
 					}
 				});
 

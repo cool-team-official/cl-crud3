@@ -1,12 +1,24 @@
 {
-	"name": "cl-crud3",
-	"version": "0.1.0",
-	"private": true,
+	"name": "cl-crud-next",
+	"version": "0.0.5",
 	"scripts": {
 		"serve": "vue-cli-service serve",
 		"build": "vue-cli-service build",
-		"plugin": "vue-cli-service build --target lib --name crud ./src/plugin.js"
+		"plugin": "vue-cli-service build --target lib --name crud ./src/index.js"
 	},
+	"main": "index.min.js",
+	"author": "icssoa",
+	"license": "ISC",
+	"keywords": [
+		"crud",
+		"admin",
+		"vue",
+		"element-ui",
+		"element-plus",
+		"vue3",
+		"vue-router",
+		"vue-vuex"
+	],
 	"dependencies": {
 		"array.prototype.flat": "^1.2.4",
 		"clone-deep": "^4.0.1",

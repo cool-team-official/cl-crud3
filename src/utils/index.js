@@ -1,10 +1,9 @@
 import cloneDeep from "clone-deep";
 import flat from "array.prototype.flat";
-import { __vue, __plugins, __inst } from "../options";
 
 export function throttle(fn, delay) {
 	let prev = Date.now();
-	return function () {
+	return function() {
 		let args = arguments;
 		let context = this;
 		let now = Date.now();
@@ -83,9 +82,9 @@ export function dataset(obj, key, value) {
 	let d = obj;
 
 	let arr = flat(
-		key.split(".").map((e) => {
+		key.split(".").map(e => {
 			if (e.includes("[")) {
-				return e.split("[").map((e) => e.replace(/"/g, ""));
+				return e.split("[").map(e => e.replace(/"/g, ""));
 			} else {
 				return e;
 			}
@@ -101,7 +100,7 @@ export function dataset(obj, key, value) {
 				let [k, v] = e.replace("]", "").split(":");
 
 				if (v) {
-					n = d.findIndex((x) => x[k] == v);
+					n = d.findIndex(x => x[k] == v);
 				} else {
 					n = Number(n);
 				}
@@ -115,7 +114,7 @@ export function dataset(obj, key, value) {
 				if (isGet) {
 					return d[n];
 				} else {
-					__inst.$set(d, n, value);
+					d[n] = value;
 				}
 			}
 		}

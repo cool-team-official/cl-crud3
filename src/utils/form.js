@@ -20,9 +20,6 @@ export default {
 			return dataset(this, p, data);
 		};
 
-		// Component scoped
-		let _this = this;
-
 		Object.assign(this, {
 			// Get form
 			getForm(prop) {
@@ -32,7 +29,7 @@ export default {
 			// Set form
 			setForm(prop, value) {
 				// Add watch
-				_this.$set(form, prop, value);
+				form[prop] = value;
 			},
 
 			// Set [props, on]
@@ -56,14 +53,14 @@ export default {
 
 			// Hidden item
 			hiddenItem(...props) {
-				props.forEach((prop) => {
+				props.forEach(prop => {
 					set({ hidden: true, prop }, true);
 				});
 			},
 
 			// Show item
 			showItem(...props) {
-				props.forEach((prop) => {
+				props.forEach(prop => {
 					set({ hidden: true, prop }, false);
 				});
 			},
@@ -71,7 +68,7 @@ export default {
 			// Clear form data
 			clearForm() {
 				for (let i in form) {
-					delete form[i]
+					delete form[i];
 				}
 			}
 		});

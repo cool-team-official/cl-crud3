@@ -2,18 +2,16 @@ import { deepMerge, isFunction, cloneDeep } from "@/utils";
 import { renderNode } from "@/utils/vnode";
 import Form from "@/utils/form";
 import Parse from "@/utils/parse";
-import { __inst } from "@/options";
-import Emitter from "@/mixins/emitter";
 import Screen from "@/mixins/screen";
 import { h, nextTick } from "vue";
 
 export default {
 	name: "cl-form",
 	componentName: "ClForm",
-	mixins: [Emitter, Screen],
+	mixins: [Screen],
 	props: {
 		// Bind value
-		value: {
+		modeValue: {
 			type: Object,
 			default: () => {
 				return {};
@@ -55,7 +53,7 @@ export default {
 		};
 	},
 	watch: {
-		value: {
+		modeValue: {
 			immediate: true,
 			deep: true,
 			handler(val) {
@@ -108,7 +106,7 @@ export default {
 			const { open } = this.conf.on;
 
 			if (open) {
-				this.$nextTick(() => {
+				nextTick(() => {
 					open(this.form, {
 						close: this.beforeClose,
 						submit: this.submit,
@@ -138,12 +136,18 @@ export default {
 			this.done();
 		},
 
+		onClose() {
+			this.clear();
+			this.done();
+		},
+
 		done() {
 			this.saving = false;
 		},
 
 		clear() {
 			this.$refs["form"].resetFields();
+			this.clearForm();
 		},
 
 		submit() {
@@ -154,9 +158,6 @@ export default {
 
 					// Hooks event
 					const { submit } = this.conf.on;
-
-					// Get mount variable
-					const { $refs } = __inst;
 
 					// Hooks by onSubmit
 					if (isFunction(submit)) {
@@ -174,7 +175,6 @@ export default {
 							close: () => {
 								this.beforeClose("submit");
 							},
-							$refs
 						});
 					} else {
 						console.error("on[submit] is not found");
@@ -219,7 +219,7 @@ export default {
 				}
 
 				return (
-					<el-col key={`form-item-${i}`} span={24} {...e}>
+					<el-col span={24} {...e}>
 						{e.component &&
 							h(
 								<el-form-item></el-form-item>,
@@ -361,7 +361,8 @@ export default {
 					{
 						opList: hdr.opList,
 						props,
-						...props
+						...props,
+						onClose: this.onClose
 					},
 					{
 						default: () => {

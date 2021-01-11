@@ -1,9 +1,11 @@
+import { h } from "vue";
+
 export default {
 	name: "cl-upsert",
 	inject: ["crud"],
 	props: {
 		// Bind value
-		value: {
+		modeValue: {
 			type: Object,
 			default: () => {
 				return {};
@@ -50,7 +52,7 @@ export default {
 		// Hook by submit { isEdit, data, { next, done, close } }
 		onSubmit: Function
 	},
-	emits: ['open'],
+	emits: ["open", "update:modelValue"],
 	data() {
 		return {
 			isEdit: false,
@@ -58,7 +60,7 @@ export default {
 		};
 	},
 	watch: {
-		value: {
+		modeValue: {
 			immediate: true,
 			deep: true,
 			handler(val) {
@@ -79,7 +81,6 @@ export default {
 		// Add
 		async add() {
 			this.isEdit = false;
-			this.form = {};
 			await this.open();
 			this.$emit("open", false, {});
 		},
@@ -91,7 +92,7 @@ export default {
 			// Assign data
 			if (data) {
 				for (let i in data) {
-					this.$set(this.form, i, data[i]);
+					this.form[i] = data[i];
 				}
 			}
 
@@ -101,6 +102,10 @@ export default {
 
 		// Edit
 		edit(data) {
+			if (!this.$refs["form"]) {
+				return false;
+			}
+
 			const { showLoading, hiddenLoading } = this.$refs["form"];
 
 			// Is edit
@@ -114,7 +119,7 @@ export default {
 			}
 
 			// Finish
-			const done = (data) => {
+			const done = data => {
 				// Assign data
 				Object.assign(this.form, data);
 				hiddenLoading();
@@ -127,7 +132,7 @@ export default {
 			};
 
 			// Submit
-			const next = (data) => {
+			const next = data => {
 				// Get Service and Dict
 				const { dict, service } = this.crud;
 				// Get api.info
@@ -145,7 +150,7 @@ export default {
 					service[reqName]({
 						id: data.id
 					})
-						.then((res) => {
+						.then(res => {
 							// Finish
 							done(res);
 							resolve(res);
@@ -158,7 +163,7 @@ export default {
 							// Callback
 							this.$emit("open", this.isEdit, this.form);
 						})
-						.catch((err) => {
+						.catch(err => {
 							this.$message.error(err);
 							reject(err);
 						})
@@ -172,7 +177,7 @@ export default {
 			if (this.onInfo) {
 				this.onInfo(data, {
 					next,
-					done: (data) => {
+					done: data => {
 						done(data);
 						this.$emit("open", true, this.form);
 					},
@@ -185,7 +190,11 @@ export default {
 
 		// Open
 		open() {
-			return new Promise((resolve) => {
+			return new Promise(resolve => {
+				if (!this.$refs["form"]) {
+					return false;
+				}
+
 				this.$refs["form"].open({
 					items: this.items,
 					props: {
@@ -253,7 +262,7 @@ export default {
 			const { dict, service } = this.crud;
 
 			// Submit
-			const next = (data) => {
+			const next = data => {
 				return new Promise((resolve, reject) => {
 					// Judge update or add
 					const func = this.isEdit ? "update" : "add";
@@ -268,7 +277,7 @@ export default {
 
 					// Send request
 					service[reqName](data)
-						.then((res) => {
+						.then(res => {
 							this.$message.success("保存成功");
 							// Close
 							this.close("submit");
@@ -277,7 +286,7 @@ export default {
 							// Callback
 							resolve(res);
 						})
-						.catch((err) => {
+						.catch(err => {
 							this.$message.error(err);
 							reject(err);
 						})
@@ -312,7 +321,7 @@ export default {
 				"showItem"
 			];
 
-			fns.forEach((e) => {
+			fns.forEach(e => {
 				this[e] = this.$refs["form"][e];
 			});
 		}
@@ -321,9 +330,7 @@ export default {
 	render() {
 		return (
 			<div class="cl-upsert">
-				<cl-form
-					ref="form"
-					v-model={this.form}>{this.$slots.default ? this.$slots.default() : null}</cl-form>
+				{h(<cl-form ref="form" v-model={this.form}></cl-form>, {}, this.$slots)}
 			</div>
 		);
 	}

@@ -203,8 +203,8 @@ export default {
 
 						if (left.includes("%")) {
 							return {
-								top: +clientHeight * (+top.replace(/\%/g, "") / 100),
-								left: +clientWidth * (+left.replace(/\%/g, "") / 100)
+								top: +clientHeight * (+top.replace(/%/g, "") / 100),
+								left: +clientWidth * (+left.replace(/%/g, "") / 100)
 							};
 						} else {
 							return {
@@ -226,7 +226,7 @@ export default {
 					const maxTop = clientHeight - dlg.clientHeight - pad;
 
 					// Start move
-					document.onmousemove = function (e) {
+					document.onmousemove = function(e) {
 						let left = e.clientX - dis.left + box.left;
 						let top = e.clientY - dis.top + box.top;
 
@@ -248,7 +248,7 @@ export default {
 					};
 
 					// Clear event
-					document.onmouseup = function () {
+					document.onmouseup = function() {
 						document.onmousemove = null;
 						document.onmouseup = null;
 					};
@@ -315,8 +315,9 @@ export default {
 			<el-dialog
 				ref="dialog"
 				title={this.title}
-				custom-class={`cl-dialog cl-dialog--${this.$.uid} ${this.hiddenOp ? "hidden-header" : ""
-					}`}
+				custom-class={`cl-dialog cl-dialog--${this.$.uid} ${
+					this.hiddenOp ? "hidden-header" : ""
+				}`}
 				onOpen={this.onOpen}
 				onOpened={this.onOpened}
 				onClose={this.onClose}
@@ -325,25 +326,23 @@ export default {
 				v-model={this.visible}></el-dialog>
 		);
 
-		return (
-			h(
-				ElDialog,
-				{
-					...this.props,
-					fullscreen: this.isFullscreen
+		return h(
+			ElDialog,
+			{
+				...this.props,
+				fullscreen: this.isFullscreen
+			},
+			{
+				default: () => {
+					return body ? body() : null;
 				},
-				{
-					default: () => {
-						return body ? body() : null;
-					},
-					title: () => {
-						return this.renderHeader();
-					},
-					footer: () => {
-						return footer ? footer() : null;
-					}
+				title: () => {
+					return this.renderHeader();
+				},
+				footer: () => {
+					return footer ? footer() : null;
 				}
-			)
+			}
 		);
 	}
 };
