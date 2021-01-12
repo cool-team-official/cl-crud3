@@ -226,7 +226,7 @@ export default {
 					const maxTop = clientHeight - dlg.clientHeight - pad;
 
 					// Start move
-					document.onmousemove = function(e) {
+					document.onmousemove = function (e) {
 						let left = e.clientX - dis.left + box.left;
 						let top = e.clientY - dis.top + box.top;
 
@@ -248,7 +248,7 @@ export default {
 					};
 
 					// Clear event
-					document.onmouseup = function() {
+					document.onmouseup = function () {
 						document.onmousemove = null;
 						document.onmouseup = null;
 					};
@@ -315,9 +315,6 @@ export default {
 			<el-dialog
 				ref="dialog"
 				title={this.title}
-				custom-class={`cl-dialog cl-dialog--${this.$.uid} ${
-					this.hiddenOp ? "hidden-header" : ""
-				}`}
 				onOpen={this.onOpen}
 				onOpened={this.onOpened}
 				onClose={this.onClose}
@@ -326,10 +323,18 @@ export default {
 				v-model={this.visible}></el-dialog>
 		);
 
+		const customClass = [
+			'cl-dialog',
+			`cl-dialog--${this.$.uid}`,
+			this.hiddenOp ? "hidden-header" : "",
+			this.props.customClass || this.props['custom-class'],
+		].join(' ')
+
 		return h(
 			ElDialog,
 			{
 				...this.props,
+				customClass,
 				fullscreen: this.isFullscreen
 			},
 			{
