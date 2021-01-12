@@ -1,12 +1,12 @@
 {
 	"name": "cl-crud-next",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"scripts": {
 		"serve": "vue-cli-service serve",
 		"build": "vue-cli-service build",
 		"crud": "vue-cli-service build --target lib --name index ./src/index.js"
 	},
-	"main": "index.min.js",
+	"main": "index.umd.min.js",
 	"author": "icssoa",
 	"license": "ISC",
 	"keywords": [
