@@ -6,7 +6,6 @@ import Parse from "@/utils/parse";
 
 export default {
 	name: "cl-adv-search",
-	inject: ["crud"],
 	props: {
 		// Bind value
 		value: {
@@ -39,8 +38,9 @@ export default {
 		// Hooks by search { data, { next, close } }
 		onSearch: Function
 	},
-	mixins: [Screen],
 	emits: ["open", "close", "reset", "clear"],
+	inject: ["crud", 'mitt'],
+	mixins: [Screen],
 	data() {
 		return {
 			form: {},
@@ -59,8 +59,8 @@ export default {
 		}
 	},
 	created() {
-		this.$mitt.on("crud.open", this.open);
-		this.$mitt.on("crud.close", this.close);
+		this.mitt.on("crud.open", this.open);
+		this.mitt.on("crud.close", this.close);
 
 		Form.inject.call(this, {
 			form: this.form

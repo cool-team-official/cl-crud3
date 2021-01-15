@@ -4,7 +4,6 @@ import { h, inject, nextTick } from "vue";
 
 export default {
 	name: "cl-table",
-
 	props: {
 		columns: {
 			type: Array,
@@ -18,34 +17,29 @@ export default {
 			}
 		}
 	},
-
-	inject: ["crud"],
-
+	inject: ["crud", 'mitt'],
 	data() {
 		return {
 			maxHeight: null,
 			data: []
 		};
 	},
-
 	created() {
 		// Window resize
-		this.$mitt.on("crud.resize", () => {
+		this.mitt.on("crud.resize", () => {
 			this.calcMaxHeight();
 		});
 
 		// Crud refresh
-		this.$mitt.on("crud.refresh", ({ list }) => {
+		this.mitt.on("crud.refresh", ({ list }) => {
 			this.data = list;
 		});
 	},
-
 	mounted() {
 		this.setDefaultSort();
 		this.calcMaxHeight();
 		this.bindMethods();
 	},
-
 	methods: {
 		// Set sort and append to request params
 		setDefaultSort() {
@@ -87,7 +81,7 @@ export default {
 												const perm = getPermission(vnode);
 
 												if (perm) {
-													let clickEvent = () => {};
+													let clickEvent = () => { };
 													let buttonText = null;
 
 													switch (vnode) {
@@ -270,7 +264,7 @@ export default {
 
 		// Watch selection change
 		selectionChange(selection) {
-			this.$mitt.emit("table.selection-change", selection);
+			this.mitt.emit("table.selection-change", selection);
 		},
 
 		// Calc el-table max-height
@@ -330,7 +324,6 @@ export default {
 			});
 		}
 	},
-
 	render() {
 		const { empty, append } = this.$slots;
 		const { loading } = inject("crud");

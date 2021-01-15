@@ -1,5 +1,5 @@
 import { isFunction, isString, cloneDeep, isObject } from "./index";
-import { getCurrentInstance, h, resolveComponent } from "vue";
+import { h, resolveComponent } from "vue";
 
 /**
  * Parse JSX, filter params
@@ -22,10 +22,10 @@ const parse_jsx = (vnode, options) => {
 
 	// Use component
 	if (vnode.render) {
-		const { ctx } = getCurrentInstance();
+		const { component } = inject('op')
 
 		if (!ctx.$root.$options.components[vnode.name]) {
-			ctx.$component(vnode.name, cloneDeep(vnode));
+			component(vnode.name, cloneDeep(vnode));
 		}
 	}
 
@@ -35,7 +35,7 @@ const parse_jsx = (vnode, options) => {
 	if (scope) {
 		// Add input event
 		data.modelValue = scope[prop];
-		data["onUpdate:modelValue"] = function(val) {
+		data["onUpdate:modelValue"] = function (val) {
 			scope[prop] = val;
 		};
 	}

@@ -6,21 +6,18 @@ export default function ({ __crud }) {
 	return {
 		name: "cl-crud",
 		componentName: "ClCrud",
-
 		props: {
 			name: String,
 			onDelete: Function,
 			onRefresh: Function
 		},
-
+		inject: ['mitt'],
 		emits: ["load"],
-
 		provide() {
 			return {
 				crud: this
 			};
 		},
-
 		data() {
 			return {
 				service: null,
@@ -79,13 +76,11 @@ export default function ({ __crud }) {
 				event: {}
 			};
 		},
-
 		created() {
-			this.$mitt.on("table.selection-change", selection => {
+			this.mitt.on("table.selection-change", selection => {
 				this.selection.splice(0, this.selection.length, ...selection);
 			});
 		},
-
 		mounted() {
 			// Merge crud data
 			const res = bootstrap(deepMerge(this, __crud));
@@ -96,10 +91,9 @@ export default function ({ __crud }) {
 			// Window onresize
 			window.removeEventListener("resize", function () { });
 			window.addEventListener("resize", () => {
-				this.$mitt.emit("crud.resize");
+				this.mitt.emit("crud.resize");
 			});
 		},
-
 		methods: {
 			// Get service permission
 			getPermission(key) {
@@ -114,22 +108,22 @@ export default function ({ __crud }) {
 
 			// Upsert add
 			rowAdd() {
-				this.$mitt.emit("crud.add");
+				this.mitt.emit("crud.add");
 			},
 
 			// Upsert edit
 			rowEdit(data) {
-				this.$mitt.emit("crud.edit", data);
+				this.mitt.emit("crud.edit", data);
 			},
 
 			// Upsert append
 			rowAppend(data) {
-				this.$mitt.emit("crud.append", data);
+				this.mitt.emit("crud.append", data);
 			},
 
 			// Upsert close
 			rowClose() {
-				this.$mitt.emit("crud.close");
+				this.mitt.emit("crud.close");
 			},
 
 			// Row delete
@@ -185,12 +179,12 @@ export default function ({ __crud }) {
 
 			// Open advSearch
 			openAdvSearch() {
-				this.$mitt.emit("crud.open");
+				this.mitt.emit("crud.open");
 			},
 
 			// close advSearch
 			closeAdvSearch() {
-				this.$mitt.emit("crud.close");
+				this.mitt.emit("crud.close");
 			},
 
 			// Refresh params replace
@@ -239,7 +233,7 @@ export default function ({ __crud }) {
 
 				// 渲染
 				const render = (list, pagination) => {
-					this.$mitt.emit("crud.refresh", { list, pagination });
+					this.mitt.emit("crud.refresh", { list, pagination });
 					done();
 				};
 
@@ -292,7 +286,7 @@ export default function ({ __crud }) {
 
 			// Layout again
 			doLayout() {
-				this.$mitt.emit("resize");
+				this.mitt.emit("resize");
 			},
 
 			done() {
@@ -300,7 +294,6 @@ export default function ({ __crud }) {
 				this.test.process = true;
 			}
 		},
-
 		render() {
 			return <div class="cl-crud">{this.$slots.default()}</div>;
 		}

@@ -2,7 +2,6 @@ import { h } from "vue";
 
 export default {
 	name: "cl-upsert",
-	inject: ["crud"],
 	props: {
 		// Bind value
 		modeValue: {
@@ -52,6 +51,7 @@ export default {
 		// Hook by submit { isEdit, data, { next, done, close } }
 		onSubmit: Function
 	},
+	inject: ["crud", 'mitt'],
 	emits: ["open", "update:modelValue"],
 	data() {
 		return {
@@ -69,10 +69,10 @@ export default {
 		}
 	},
 	created() {
-		this.$mitt.on("crud.add", this.add);
-		this.$mitt.on("crud.append", this.append);
-		this.$mitt.on("crud.edit", this.edit);
-		this.$mitt.on("crud.close", this.close);
+		this.mitt.on("crud.add", this.add);
+		this.mitt.on("crud.append", this.append);
+		this.mitt.on("crud.edit", this.edit);
+		this.mitt.on("crud.close", this.close);
 	},
 	mounted() {
 		this.inject();

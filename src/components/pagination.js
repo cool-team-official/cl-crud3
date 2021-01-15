@@ -1,11 +1,11 @@
-import { getCurrentInstance, h, inject, reactive } from "vue";
+import { getCurrentInstance, h, inject, onMounted, reactive } from "vue";
 
 export default {
 	name: "cl-pagination",
 
 	setup() {
 		const { refresh } = inject("crud");
-		const { ctx } = getCurrentInstance();
+		const mitt = inject("mitt");
 
 		const state = reactive({
 			total: 0,
@@ -34,7 +34,7 @@ export default {
 			}
 		};
 
-		ctx.$mitt.on("crud.refresh", ({ pagination }) => {
+		mitt.on("crud.refresh", ({ pagination }) => {
 			setPagination(pagination);
 		});
 
