@@ -1,6 +1,6 @@
 {
 	"name": "cl-crud-next",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"scripts": {
 		"serve": "vue-cli-service serve",
 		"build": "vue-cli-service build",
@@ -23,6 +23,7 @@
 		"array.prototype.flat": "^1.2.4",
 		"clone-deep": "^4.0.1",
 		"core-js": "^3.6.5",
+		"element-plus": "^1.0.1-beta.27",
 		"mitt": "^2.1.0",
 		"vue": "^3.0.0"
 	},

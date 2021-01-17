@@ -174,7 +174,7 @@ export default {
 							done: this.done,
 							close: () => {
 								this.beforeClose("submit");
-							},
+							}
 						});
 					} else {
 						console.error("on[submit] is not found");
@@ -361,7 +361,6 @@ export default {
 					{
 						opList: hdr.opList,
 						props,
-						...props,
 						onClose: this.onClose
 					},
 					{

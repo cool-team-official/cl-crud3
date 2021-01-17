@@ -226,7 +226,7 @@ export default {
 					const maxTop = clientHeight - dlg.clientHeight - pad;
 
 					// Start move
-					document.onmousemove = function (e) {
+					document.onmousemove = function(e) {
 						let left = e.clientX - dis.left + box.left;
 						let top = e.clientY - dis.top + box.top;
 
@@ -248,7 +248,7 @@ export default {
 					};
 
 					// Clear event
-					document.onmouseup = function () {
+					document.onmouseup = function() {
 						document.onmousemove = null;
 						document.onmouseup = null;
 					};
@@ -324,11 +324,11 @@ export default {
 		);
 
 		const customClass = [
-			'cl-dialog',
+			"cl-dialog",
 			`cl-dialog--${this.$.uid}`,
 			this.hiddenOp ? "hidden-header" : "",
-			this.props.customClass || this.props['custom-class'],
-		].join(' ')
+			this.props.customClass || this.props["custom-class"]
+		].join(" ");
 
 		return h(
 			ElDialog,
