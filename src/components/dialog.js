@@ -47,7 +47,7 @@ export default {
 
 	data() {
 		return {
-			isFullscreen: false,
+			fullscreen: false,
 			visible: false
 		};
 	},
@@ -56,11 +56,11 @@ export default {
 		"props.fullscreen": {
 			immediate: true,
 			handler(val) {
-				this.isFullscreen = val;
+				this.fullscreen = val;
 			}
 		},
 
-		isFullscreen: {
+		fullscreen: {
 			handler(val) {
 				this.setDialog();
 				this.$emit("fullscreen-change", val);
@@ -72,6 +72,12 @@ export default {
 			handler(val) {
 				this.visible = val;
 			}
+		}
+	},
+
+	computed: {
+		fullscreen2() {
+			return this.isFullscreen ? true : this.fullscreen;
 		}
 	},
 
@@ -94,7 +100,7 @@ export default {
 		onClose() {
 			this.$emit("close");
 			this.close();
-			this.isFullscreen = this.props.fullscreen || false;
+			this.fullscreen = this.props.fullscreen || false;
 		},
 
 		onClosed() {
@@ -103,7 +109,7 @@ export default {
 
 		// Change dialog fullscreen status
 		changeFullscreen(val) {
-			this.isFullscreen = isBoolean(val) ? val : !this.isFullscreen;
+			this.fullscreen = isBoolean(val) ? val : !this.fullscreen;
 		},
 
 		// Get el-dialog element
@@ -125,7 +131,7 @@ export default {
 				if (dlg) {
 					dlg.style.left = 0;
 
-					if (this.isFullscreen) {
+					if (this.fullscreen2) {
 						dlg.style.top = 0;
 						dlg.style.marginBottom = 0;
 					} else {
@@ -134,7 +140,7 @@ export default {
 					}
 
 					// Set header cursor state
-					hdr.style.cursor = this.isFullscreen ? "text" : "move";
+					hdr.style.cursor = this.fullscreen2 ? "text" : "move";
 				}
 			});
 		},
@@ -150,14 +156,14 @@ export default {
 
 				hdr.onmousedown = e => {
 					// Props
-					const { fullscreen, top = "15vh" } = this.$attrs;
+					const { top = "15vh" } = this.$attrs;
 
 					// Body size
 					const { clientWidth, clientHeight } = document.body;
 
 					// Try drag
 					const isDrag = (() => {
-						if (fullscreen) {
+						if (this.fullscreen2) {
 							return false;
 						}
 
@@ -273,7 +279,7 @@ export default {
 								}
 
 								// Show diff icon
-								if (this.isFullscreen) {
+								if (this.fullscreen2) {
 									return (
 										<button class="minimize" onClick={this.changeFullscreen}>
 											<i class="el-icon-minus" />
@@ -335,7 +341,7 @@ export default {
 			{
 				...this.props,
 				customClass,
-				fullscreen: this.isFullscreen
+				fullscreen: this.fullscreen2
 			},
 			{
 				default: () => {
