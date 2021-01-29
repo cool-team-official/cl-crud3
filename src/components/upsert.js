@@ -318,7 +318,9 @@ export default {
 				"setOptions",
 				"toggleItem",
 				"hiddenItem",
-				"showItem"
+				"showItem",
+				"showLoading",
+				"hiddenLoading"
 			];
 
 			fns.forEach(e => {

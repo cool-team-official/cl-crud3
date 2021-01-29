@@ -50,7 +50,7 @@
 				<cl-pagination></cl-pagination>
 			</el-row>
 
-			<cl-upsert ref="upsert" :items="upsert.items"></cl-upsert>
+			<cl-upsert ref="upsert" :items="upsert.items" @open="onUpsertOpen"></cl-upsert>
 			<cl-adv-search ref="advSearch" :items="adv.items"></cl-adv-search>
 		</cl-crud>
 
@@ -414,6 +414,16 @@ export default {
 		onBeforeClose(done) {
 			console.log("close before");
 			done();
+		},
+
+		onUpsertOpen() {
+			setTimeout(() => {
+				this.$refs["upsert"].showLoading();
+
+				setTimeout(() => {
+					this.$refs["upsert"].hiddenLoading();
+				}, 1000);
+			}, 1000);
 		}
 	}
 };
