@@ -360,6 +360,7 @@ export default {
 					ClDialog,
 					{
 						opList: hdr.opList,
+						title: props.title,
 						props,
 						onClose: this.onClose
 					},
