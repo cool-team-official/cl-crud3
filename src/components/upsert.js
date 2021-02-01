@@ -43,16 +43,16 @@ export default {
 			default: "关闭"
 		},
 		// Hook by open { isEdit, data, { submit, done, close } }
-		onOpen: Function,
+		onUpsertOpen: Function,
 		// Hook by close { action, done }
-		onClose: Function,
+		onUpsertClose: Function,
 		// Hook by info { data, { next, done, close } }
-		onInfo: Function,
+		onUpsertInfo: Function,
 		// Hook by submit { isEdit, data, { next, done, close } }
-		onSubmit: Function
+		onUpsertSubmit: Function
 	},
 	inject: ["crud", 'mitt'],
-	emits: ["open", "update:modelValue"],
+	emits: ["open", "close", "update:modelValue"],
 	data() {
 		return {
 			isEdit: false,
@@ -173,9 +173,9 @@ export default {
 				});
 			};
 
-			// Hook by onInfo
-			if (this.onInfo) {
-				this.onInfo(data, {
+			// Hook by onUpsertInfo
+			if (this.onUpsertInfo) {
+				this.onUpsertInfo(data, {
 					next,
 					done: data => {
 						done(data);
@@ -213,8 +213,8 @@ export default {
 					},
 					on: {
 						open: (data, { done, close }) => {
-							if (this.onOpen) {
-								this.onOpen(this.isEdit, this.form, {
+							if (this.onUpsertOpen) {
+								this.onUpsertOpen(this.isEdit, this.form, {
 									submit: () => {
 										this.submit(this.form);
 									},
@@ -245,8 +245,8 @@ export default {
 			if (action === "submit") {
 				done();
 			} else {
-				if (this.onClose) {
-					this.onClose(action, done);
+				if (this.onUpsertClose) {
+					this.onUpsertClose(action, done);
 				} else {
 					done();
 				}
@@ -294,9 +294,9 @@ export default {
 				});
 			};
 
-			// Hook by onSubmit
-			if (this.onSubmit) {
-				this.onSubmit(this.isEdit, data, {
+			// Hook by onUpsertSubmit
+			if (this.onUpsertSubmit) {
+				this.onUpsertSubmit(this.isEdit, data, {
 					done,
 					next,
 					close: () => {

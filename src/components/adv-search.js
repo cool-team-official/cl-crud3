@@ -26,17 +26,17 @@ export default {
 				return {};
 			}
 		},
-		// Op button ['search', 'reset', 'clear', 'close']
+		// Op button
 		opList: {
 			type: Array,
 			default: () => ["search", "reset", "clear", "close"]
 		},
 		// Hooks by open { data, { next } }
-		onOpen: Function,
+		onAdvOpen: Function,
 		// Hooks by close { done }
-		onClose: Function,
+		onAdvClose: Function,
 		// Hooks by search { data, { next, close } }
-		onSearch: Function
+		onAdvSearch: Function
 	},
 	emits: ["open", "close", "reset", "clear"],
 	inject: ["crud", 'mitt'],
@@ -87,8 +87,8 @@ export default {
 				this.$emit("open", this.form);
 			};
 
-			if (this.onOpen) {
-				this.onOpen(this.form, { next });
+			if (this.onAdvOpen) {
+				this.onAdvOpen(this.form, { next });
 			} else {
 				next(null);
 			}
@@ -102,8 +102,8 @@ export default {
 				this.$emit("close");
 			};
 
-			if (this.onClose) {
-				this.onClose(done);
+			if (this.onAdvClose) {
+				this.onAdvClose(done);
 			} else {
 				done();
 			}
@@ -135,8 +135,8 @@ export default {
 				this.close();
 			};
 
-			if (this.onSearch) {
-				this.onSearch(params, { next, close: this.close });
+			if (this.onAdvSearch) {
+				this.onAdvSearch(params, { next, close: this.close });
 			} else {
 				next(params);
 			}
