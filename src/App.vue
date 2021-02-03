@@ -265,6 +265,18 @@ export default {
 						}
 					},
 					{
+						label: "下拉",
+						prop: "sel",
+						component: {
+							name: "el-select",
+							options: []
+						},
+						rules: {
+							required: true,
+							message: "姓名不能为空"
+						}
+					},
+					{
 						label: "是否显示存款",
 						prop: "isPrice",
 						flex: false,
@@ -417,13 +429,24 @@ export default {
 		},
 
 		onUpsertOpen() {
-			setTimeout(() => {
-				this.$refs["upsert"].showLoading();
+			this.$refs["upsert"].setOptions("sel", [
+				{
+					label: "a",
+					value: 1
+				},
+				{
+					label: "b",
+					value: 2
+				}
+			]);
 
-				setTimeout(() => {
-					this.$refs["upsert"].hiddenLoading();
-				}, 1000);
-			}, 1000);
+			// setTimeout(() => {
+			// 	this.$refs["upsert"].showLoading();
+
+			// 	setTimeout(() => {
+			// 		this.$refs["upsert"].hiddenLoading();
+			// 	}, 1000);
+			// }, 1000);
 		}
 	}
 };

@@ -79,55 +79,59 @@ export function renderNode(vnode, { prop, scope, slots }) {
 
 			if (keys.includes(vnode.name)) {
 				// Append component children
-				const children = (vnode.options || []).map((e, i) => {
-					if (vnode.name == "el-select") {
-						let label, value;
+				const children = <div>
+					{
+						(vnode.options || []).map((e, i) => {
+							if (vnode.name == "el-select") {
+								let label, value;
 
-						if (isString(e)) {
-							label = value = e;
-						} else if (isObject(e)) {
-							label = e.label;
-							value = e.value;
-						} else {
-							return <cl-error-message title={`组件渲染失败，options 参数错误`} />;
-						}
+								if (isString(e)) {
+									label = value = e;
+								} else if (isObject(e)) {
+									label = e.label;
+									value = e.value;
+								} else {
+									return <cl-error-message title={`组件渲染失败，options 参数错误`} />;
+								}
 
-						return (
-							<el-option
-								{...{
-									key: i,
-									label,
-									value,
-									...e.props
-								}}
-							/>
-						);
-					} else if (vnode.name == "el-radio-group") {
-						return (
-							<el-radio
-								{...{
-									key: i,
-									label: e.value,
-									...e.props
-								}}>
-								{e.label}
-							</el-radio>
-						);
-					} else if (vnode.name == "el-checkbox-group") {
-						return (
-							<el-checkbox
-								{...{
-									key: i,
-									label: e.value,
-									...e.props
-								}}>
-								{e.label}
-							</el-checkbox>
-						);
-					} else {
-						return null;
+								return (
+									<el-option
+										{...{
+											key: i,
+											label,
+											value,
+											...e.props
+										}}
+									/>
+								);
+							} else if (vnode.name == "el-radio-group") {
+								return (
+									<el-radio
+										{...{
+											key: i,
+											label: e.value,
+											...e.props
+										}}>
+										{e.label}
+									</el-radio>
+								);
+							} else if (vnode.name == "el-checkbox-group") {
+								return (
+									<el-checkbox
+										{...{
+											key: i,
+											label: e.value,
+											...e.props
+										}}>
+										{e.label}
+									</el-checkbox>
+								);
+							} else {
+								return null;
+							}
+						})
 					}
-				});
+				</div>
 
 				return parse_jsx(vnode, { prop, scope, children });
 			} else {
