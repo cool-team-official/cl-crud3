@@ -122,8 +122,8 @@ export default {
 							}
 						);
 					}
-					// Index, Expand, Selection
-					else if (["selection", "index", "expand"].includes(item.type)) {
+					// Selection，Index
+					else if (["selection", "index"].includes(item.type)) {
 						return h(ElTableColumn, item);
 					}
 					// Default
