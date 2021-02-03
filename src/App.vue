@@ -267,13 +267,11 @@ export default {
 					{
 						label: "下拉",
 						prop: "sel",
+						value: [1],
 						component: {
 							name: "el-select",
+							multiple: true,
 							options: []
-						},
-						rules: {
-							required: true,
-							message: "姓名不能为空"
 						}
 					},
 					{
@@ -311,7 +309,7 @@ export default {
 					{
 						label: "下拉框",
 						prop: "v2",
-						value: 1,
+						value: [1],
 						component: {
 							name: "el-select",
 							options: [
@@ -429,16 +427,18 @@ export default {
 		},
 
 		onUpsertOpen() {
-			this.$refs["upsert"].setOptions("sel", [
-				{
-					label: "a",
-					value: 1
-				},
-				{
-					label: "b",
-					value: 2
-				}
-			]);
+			setTimeout(() => {
+				this.$refs["upsert"].setOptions("sel", [
+					{
+						label: "a",
+						value: 1
+					},
+					{
+						label: "b",
+						value: 2
+					}
+				]);
+			}, 1000);
 
 			// setTimeout(() => {
 			// 	this.$refs["upsert"].showLoading();

@@ -1,13 +1,15 @@
 import { isFunction, isString, cloneDeep, isObject } from "./index";
 import { h, resolveComponent } from "vue";
 
+let KEY = 1
+
 /**
  * Parse JSX, filter params
  * @param {*} vnode
  * @param {{scope,prop,children}} options
  */
 const parse_jsx = (vnode, options) => {
-	const { scope, prop, slots, children } = options || [];
+	const { scope, prop, slots, } = options || [];
 
 	// Use slot
 	if (vnode.name.indexOf("slot-") == 0) {
@@ -20,17 +22,19 @@ const parse_jsx = (vnode, options) => {
 		}
 	}
 
+	// Avoid loop update
+	let data = cloneDeep(vnode);
+	// Remove
+	delete data.children
+
 	// Use component
 	if (vnode.render) {
 		const { component } = inject('op')
 
 		if (!ctx.$root.$options.components[vnode.name]) {
-			component(vnode.name, cloneDeep(vnode));
+			component(vnode.name, data);
 		}
 	}
-
-	// Avoid loop update
-	let data = cloneDeep(vnode);
 
 	if (scope) {
 		// Add input event
@@ -42,7 +46,7 @@ const parse_jsx = (vnode, options) => {
 
 	return h(resolveComponent(vnode.name), data, {
 		default: () => {
-			return children;
+			return vnode.children;
 		}
 	});
 };
@@ -79,7 +83,7 @@ export function renderNode(vnode, { prop, scope, slots }) {
 
 			if (keys.includes(vnode.name)) {
 				// Append component children
-				const children = <div>
+				vnode.children = <div>
 					{
 						(vnode.options || []).map((e, i) => {
 							if (vnode.name == "el-select") {
@@ -133,7 +137,9 @@ export function renderNode(vnode, { prop, scope, slots }) {
 					}
 				</div>
 
-				return parse_jsx(vnode, { prop, scope, children });
+				// vnode.key = KEY++;
+
+				return parse_jsx(vnode, { prop, scope, });
 			} else {
 				return parse_jsx(vnode, { prop, scope, slots });
 			}
