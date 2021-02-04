@@ -50,7 +50,14 @@
 				<cl-pagination></cl-pagination>
 			</el-row>
 
-			<cl-upsert ref="upsert" :items="upsert.items" @open="onUpsertOpen">
+			<cl-upsert
+				ref="upsert"
+				:items="upsert.items"
+				:on-upsert-close="onBeforeClose"
+				:on-upsert-open="onBeforeOpen"
+				@open="onOpen"
+				@close="onClose"
+			>
 				<template #slot-crud>
 					<cl-crud @load="onLoad2">
 						<cl-table :columns="columns" :props="{ height: '300px' }"></cl-table>
@@ -72,7 +79,8 @@
 			v-model="dialog.visible"
 			:props="{
 				'append-to-body': true,
-				fullscreen: false
+				fullscreen: false,
+				'before-close': onBeforeClose
 			}"
 			@open="onOpen"
 			@opened="onOpened"
@@ -413,8 +421,8 @@ export default {
 						console.log("cl-form open");
 					},
 
-					close(action, done) {
-						console.log("cl-form close", action);
+					close(done) {
+						console.log("cl-form close");
 						done();
 					},
 
@@ -451,27 +459,8 @@ export default {
 			done();
 		},
 
-		onUpsertOpen() {
-			setTimeout(() => {
-				this.$refs["upsert"].setOptions("sel", [
-					{
-						label: "a",
-						value: 1
-					},
-					{
-						label: "b",
-						value: 2
-					}
-				]);
-			}, 1000);
-
-			// setTimeout(() => {
-			// 	this.$refs["upsert"].showLoading();
-
-			// 	setTimeout(() => {
-			// 		this.$refs["upsert"].hiddenLoading();
-			// 	}, 1000);
-			// }, 1000);
+		onBeforeOpen(isEdit, data, { done, close }) {
+			console.log("open before");
 		}
 	}
 };

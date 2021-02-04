@@ -1,4 +1,4 @@
-import { deepMerge, isFunction, cloneDeep } from "@/utils";
+import { deepMerge, isFunction, cloneDeep, throttle } from "@/utils";
 import { renderNode } from "@/utils/vnode";
 import Form from "@/utils/form";
 import Parse from "@/utils/parse";
@@ -25,7 +25,6 @@ export default {
 			saving: false,
 			loading: false,
 			form: {},
-
 			conf: {
 				on: {
 					open: null,
@@ -39,9 +38,9 @@ export default {
 				},
 				op: {
 					hidden: false,
-					confirmButtonText: "保存",
-					cancelButtonText: "取消",
-					layout: ["cancel", "confirm"]
+					saveButtonText: "保存",
+					closeButtonText: "取消",
+					layout: ["close", "save"]
 				},
 				hdr: {
 					hidden: false,
@@ -106,9 +105,11 @@ export default {
 			const { open } = this.conf.on;
 
 			if (open) {
+				this.closed = false;
+
 				nextTick(() => {
 					open(this.form, {
-						close: this.beforeClose,
+						close: this.close,
 						submit: this.submit,
 						done: this.done
 					});
@@ -116,27 +117,16 @@ export default {
 			}
 		},
 
-		beforeClose(action = "close") {
-			// Close event
-			const done = () => {
-				this.close();
-			};
-
-			// Hooks event
+		beforeClose() {
 			if (this.conf.on.close) {
-				this.conf.on.close(action, done);
+				this.conf.on.close(this.close);
 			} else {
-				done();
+				this.close()
 			}
 		},
 
 		close() {
 			this.visible = false;
-			this.clear();
-			this.done();
-		},
-
-		onClose() {
 			this.clear();
 			this.done();
 		},
@@ -173,7 +163,7 @@ export default {
 						submit(d, {
 							done: this.done,
 							close: () => {
-								this.beforeClose("submit");
+								this.close(true)
 							}
 						});
 					} else {
@@ -312,13 +302,13 @@ export default {
 		},
 
 		footerRender() {
-			const { hidden, layout, confirmButtonText, cancelButtonText } = this.conf.op;
+			const { hidden, layout, saveButtonText, closeButtonText } = this.conf.op;
 			const { size = "small" } = this.conf.props;
 
 			return (
 				!hidden &&
 				layout.map(vnode => {
-					if (vnode == "confirm" || vnode == "save") {
+					if (vnode == "save") {
 						return (
 							<el-button
 								size={size}
@@ -326,17 +316,15 @@ export default {
 								disabled={this.loading}
 								loading={this.saving}
 								onClick={this.submit}>
-								{confirmButtonText}
+								{saveButtonText}
 							</el-button>
 						);
-					} else if (vnode == "cancel" || vnode == "close") {
+					} else if (vnode == "close") {
 						return (
 							<el-button
 								size={size}
-								onClick={() => {
-									this.beforeClose(vnode);
-								}}>
-								{cancelButtonText}
+								onClick={this.beforeClose}>
+								{closeButtonText}
 							</el-button>
 						);
 					} else {
@@ -361,8 +349,10 @@ export default {
 					{
 						opList: hdr.opList,
 						title: props.title,
-						props,
-						onClose: this.onClose
+						props: {
+							...props,
+							'before-close': this.conf.on.close
+						},
 					},
 					{
 						default: () => {

@@ -226,7 +226,7 @@ export default {
 							resolve();
 						},
 						submit: this.submit,
-						close: this.close
+						close: this.beforeClose
 					},
 					_data: {
 						isEdit: this.isEdit
@@ -236,27 +236,21 @@ export default {
 		},
 
 		// Close
-		close(action = "close") {
-			const done = () => {
-				this.$refs["form"].close();
-				this.$emit("close", action);
-			};
+		close() {
+			this.$refs["form"].close();
+			this.$emit("close");
+		},
 
-			if (action === "submit") {
-				done();
+		// Before close
+		beforeClose() {
+			if (this.onUpsertClose) {
+				this.onUpsertClose(this.close);
 			} else {
-				if (this.onUpsertClose) {
-					this.onUpsertClose(action, done);
-				} else {
-					done();
-				}
+				this.close();
 			}
 		},
 
-		/**
-		 * Submit form
-		 * @param {*} data
-		 */
+		// Submit form
 		submit(data, { done }) {
 			// Get Service and Dict
 			const { dict, service } = this.crud;
@@ -280,7 +274,7 @@ export default {
 						.then(res => {
 							this.$message.success("保存成功");
 							// Close
-							this.close("submit");
+							this.close();
 							// Refresh
 							this.crud.refresh();
 							// Callback
@@ -299,9 +293,7 @@ export default {
 				this.onUpsertSubmit(this.isEdit, data, {
 					done,
 					next,
-					close: () => {
-						this.close("submit");
-					}
+					close: this.close
 				});
 			} else {
 				next(data);

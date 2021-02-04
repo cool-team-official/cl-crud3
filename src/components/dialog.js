@@ -82,7 +82,14 @@ export default {
 	},
 
 	methods: {
-		// Avoid double close event
+		beforeClose() {
+			if (this.props['before-close']) {
+				this.props['before-close'](this.close)
+			} else {
+				this.close()
+			}
+		},
+
 		close() {
 			this.$emit("update:modelValue", false);
 		},
@@ -296,7 +303,7 @@ export default {
 							// Close
 							else if (vnode === "close") {
 								return (
-									<button class="close" onClick={this.close}>
+									<button class="close" onClick={this.beforeClose}>
 										<i class="el-icon-close" />
 									</button>
 								);
@@ -336,24 +343,28 @@ export default {
 			this.props.customClass || this.props["custom-class"]
 		].join(" ");
 
-		return h(
-			ElDialog,
+		return <div>
 			{
-				...this.props,
-				customClass,
-				fullscreen: this.fullscreen2
-			},
-			{
-				default: () => {
-					return body ? body() : null;
-				},
-				title: () => {
-					return this.renderHeader();
-				},
-				footer: () => {
-					return footer ? footer() : null;
-				}
+				h(
+					ElDialog,
+					{
+						...this.props,
+						customClass,
+						fullscreen: this.fullscreen2,
+					},
+					{
+						default: () => {
+							return body ? body() : null;
+						},
+						title: () => {
+							return this.renderHeader();
+						},
+						footer: () => {
+							return footer ? footer() : null;
+						}
+					}
+				)
 			}
-		);
+		</div>
 	}
 };
