@@ -1,7 +1,5 @@
-import { isFunction, isString, cloneDeep, isObject } from "./index";
+import { isFunction, isString, isObject } from "./index";
 import { h, resolveComponent } from "vue";
-
-let KEY = 1
 
 /**
  * Parse JSX, filter params
@@ -23,9 +21,7 @@ const parse_jsx = (vnode, options) => {
 	}
 
 	// Avoid loop update
-	let data = cloneDeep(vnode);
-	// Remove
-	delete data.children
+	let data = vnode;
 
 	// Use component
 	if (vnode.render) {
@@ -46,7 +42,7 @@ const parse_jsx = (vnode, options) => {
 
 	return h(resolveComponent(vnode.name), data, {
 		default: () => {
-			return vnode.children;
+			return vnode._children;
 		}
 	});
 };
@@ -83,7 +79,7 @@ export function renderNode(vnode, { prop, scope, slots }) {
 
 			if (keys.includes(vnode.name)) {
 				// Append component children
-				vnode.children = <div>
+				vnode._children = <div>
 					{
 						(vnode.options || []).map((e, i) => {
 							if (vnode.name == "el-select") {
@@ -109,16 +105,11 @@ export function renderNode(vnode, { prop, scope, slots }) {
 									/>
 								);
 							} else if (vnode.name == "el-radio-group") {
-								return (
-									<el-radio
-										{...{
-											key: i,
-											label: e.value,
-											...e.props
-										}}>
-										{e.label}
-									</el-radio>
-								);
+								return h(<el-radio key={i} label={e.value}></el-radio>, e.props, {
+									default() {
+										return <span>{e.label}</span>
+									}
+								})
 							} else if (vnode.name == "el-checkbox-group") {
 								return (
 									<el-checkbox
@@ -136,8 +127,6 @@ export function renderNode(vnode, { prop, scope, slots }) {
 						})
 					}
 				</div>
-
-				// vnode.key = KEY++;
 
 				return parse_jsx(vnode, { prop, scope, });
 			} else {

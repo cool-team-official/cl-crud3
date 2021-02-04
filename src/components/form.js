@@ -162,9 +162,7 @@ export default {
 
 						submit(d, {
 							done: this.done,
-							close: () => {
-								this.close(true)
-							}
+							close: this.close
 						});
 					} else {
 						console.error("on[submit] is not found");

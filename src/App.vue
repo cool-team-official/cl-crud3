@@ -397,6 +397,24 @@ export default {
 				},
 				items: [
 					{
+						label: "状态",
+						prop: "a",
+						value: 1,
+						component: {
+							name: "el-radio-group",
+							options: [
+								{
+									label: "开启",
+									value: 1
+								},
+								{
+									label: "关闭",
+									value: 0
+								}
+							]
+						}
+					},
+					{
 						label: "标签名渲染",
 						prop: "t1",
 						component: {
@@ -461,6 +479,15 @@ export default {
 
 		onBeforeOpen(isEdit, data, { done, close }) {
 			console.log("open before");
+
+			setTimeout(() => {
+				this.$refs["upsert"].setOptions("sel", [
+					{
+						label: "a",
+						value: 1
+					}
+				]);
+			}, 500);
 		}
 	}
 };
