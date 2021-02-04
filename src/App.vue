@@ -50,7 +50,13 @@
 				<cl-pagination></cl-pagination>
 			</el-row>
 
-			<cl-upsert ref="upsert" :items="upsert.items" @open="onUpsertOpen"></cl-upsert>
+			<cl-upsert ref="upsert" :items="upsert.items" @open="onUpsertOpen">
+				<template #slot-crud>
+					<cl-crud @load="onLoad2">
+						<cl-table :columns="columns" :props="{ height: '300px' }"></cl-table>
+					</cl-crud>
+				</template>
+			</cl-upsert>
 			<cl-adv-search ref="advSearch" :items="adv.items"></cl-adv-search>
 		</cl-crud>
 
@@ -275,6 +281,13 @@ export default {
 						}
 					},
 					{
+						label: "内嵌crud",
+						prop: "crud",
+						component: {
+							name: "slot-crud"
+						}
+					},
+					{
 						label: "是否显示存款",
 						prop: "isPrice",
 						flex: false,
@@ -334,6 +347,18 @@ export default {
 	methods: {
 		onLoad({ ctx, app }) {
 			ctx.service(testService).done();
+			app.refresh({});
+		},
+
+		onLoad2({ ctx, app }) {
+			ctx.service({
+				page() {
+					return Promise.resolve({
+						list: [userList[0]],
+						pagination: {}
+					});
+				}
+			}).done();
 			app.refresh({});
 		},
 

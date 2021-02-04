@@ -1,6 +1,6 @@
 {
 	"name": "cl-crud-next",
-	"version": "0.1.8",
+	"version": "0.2.0",
 	"scripts": {
 		"serve": "vue-cli-service serve",
 		"build": "vue-cli-service build",
@@ -25,6 +25,7 @@
 		"core-js": "^3.6.5",
 		"element-plus": "^1.0.1-beta.27",
 		"mitt": "^2.1.0",
+		"tiny-emitter": "^2.1.0",
 		"vue": "^3.0.0"
 	},
 	"devDependencies": {

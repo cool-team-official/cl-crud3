@@ -1,5 +1,6 @@
-import { deepMerge, isArray, isString, isObject, isFunction } from "@/utils";
+import { deepMerge, isArray, isString, isObject } from "@/utils";
 import { bootstrap } from "@/app";
+import Emitter from '@/utils/mitt'
 import "@/assets/css/index.scss";
 
 export default function ({ __crud }) {
@@ -11,11 +12,11 @@ export default function ({ __crud }) {
 			onDelete: Function,
 			onRefresh: Function
 		},
-		inject: ['mitt'],
 		emits: ["load"],
 		provide() {
 			return {
-				crud: this
+				crud: this,
+				mitt: this.emitter
 			};
 		},
 		data() {
@@ -65,19 +66,14 @@ export default function ({ __crud }) {
 				fn: {
 					permission: null
 				},
-				upsert: {
-					items: [],
-					props: {},
-					opList: ["close", "save"],
-					sync: false,
-					saveButtonText: "保存",
-					closeButtonText: "关闭"
-				},
 				event: {}
 			};
 		},
+		beforeCreate() {
+			this.emitter = new Emitter(this.$.uid)
+		},
 		created() {
-			this.mitt.on("table.selection-change", selection => {
+			this.emitter.on("table.selection-change", selection => {
 				this.selection.splice(0, this.selection.length, ...selection);
 			});
 		},
@@ -91,7 +87,7 @@ export default function ({ __crud }) {
 			// Window onresize
 			window.removeEventListener("resize", function () { });
 			window.addEventListener("resize", () => {
-				this.mitt.emit("crud.resize");
+				this.emitter.emit("crud.resize");
 			});
 		},
 		methods: {
@@ -108,22 +104,22 @@ export default function ({ __crud }) {
 
 			// Upsert add
 			rowAdd() {
-				this.mitt.emit("crud.add");
+				this.emitter.emit("crud.add");
 			},
 
 			// Upsert edit
 			rowEdit(data) {
-				this.mitt.emit("crud.edit", data);
+				this.emitter.emit("crud.edit", data);
 			},
 
 			// Upsert append
 			rowAppend(data) {
-				this.mitt.emit("crud.append", data);
+				this.emitter.emit("crud.append", data);
 			},
 
 			// Upsert close
 			rowClose() {
-				this.mitt.emit("crud.close");
+				this.emitter.emit("crud.close");
 			},
 
 			// Row delete
@@ -179,12 +175,12 @@ export default function ({ __crud }) {
 
 			// Open advSearch
 			openAdvSearch() {
-				this.mitt.emit("crud.open");
+				this.emitter.emit("crud.open");
 			},
 
 			// close advSearch
 			closeAdvSearch() {
-				this.mitt.emit("crud.close");
+				this.emitter.emit("crud.close");
 			},
 
 			// Refresh params replace
@@ -233,7 +229,7 @@ export default function ({ __crud }) {
 
 				// 渲染
 				const render = (list, pagination) => {
-					this.mitt.emit("crud.refresh", { list, pagination });
+					this.emitter.emit("crud.refresh", { list, pagination });
 					done();
 				};
 
@@ -286,7 +282,7 @@ export default function ({ __crud }) {
 
 			// Layout again
 			doLayout() {
-				this.mitt.emit("resize");
+				this.emitter.emit("resize");
 			},
 
 			done() {
