@@ -60,7 +60,13 @@
 			>
 				<template #slot-crud>
 					<cl-crud @load="onLoad2">
+						<el-row>
+							<cl-add-btn></cl-add-btn>
+						</el-row>
+
 						<cl-table :columns="columns" :props="{ height: '300px' }"></cl-table>
+
+						<cl-upsert :items="upsert.items"></cl-upsert>
 					</cl-crud>
 				</template>
 			</cl-upsert>
