@@ -343,8 +343,6 @@ export default {
 				v-model={this.visible}></el-dialog>
 		);
 
-		console.log(this.props["custom-class"])
-
 		const customClass = [
 			"cl-dialog",
 			`cl-dialog--${this.$.uid}`,
