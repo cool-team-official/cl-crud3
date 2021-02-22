@@ -55,6 +55,9 @@
 				:items="upsert.items"
 				:on-upsert-close="onBeforeClose"
 				:on-upsert-open="onBeforeOpen"
+				:props="{
+					'custom-class': 'xxx'
+				}"
 				@open="onOpen"
 				@close="onClose"
 			>
@@ -272,6 +275,11 @@ export default {
 				visible: false
 			},
 			upsert: {
+				props: {
+					props: {
+						"custom-class": "dialog-nopadding"
+					}
+				},
 				items: [
 					{
 						label: "姓名",

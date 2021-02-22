@@ -1,5 +1,5 @@
 import { renderNode } from "@/utils/vnode";
-import { isBoolean } from "@/utils";
+import { isBoolean, isArray } from "@/utils";
 import Screen from "@/mixins/screen";
 import { h, nextTick } from "vue";
 
@@ -117,6 +117,13 @@ export default {
 		// Change dialog fullscreen status
 		changeFullscreen(val) {
 			this.fullscreen = isBoolean(val) ? val : !this.fullscreen;
+		},
+
+		// Double click set fullscreen
+		dblClickFullscreen() {
+			if (isArray(this.opList) && this.opList.includes('fullscreen')) {
+				this.changeFullscreen()
+			}
 		},
 
 		// Get el-dialog element
@@ -272,7 +279,7 @@ export default {
 		// Render dialog header
 		renderHeader() {
 			return this.hiddenOp ? null : (
-				<div class="cl-dialog__header" onDblclick={this.changeFullscreen}>
+				<div class="cl-dialog__header" onDblclick={this.dblClickFullscreen}>
 					{/* title */}
 					<span class="cl-dialog__title">{this.title}</span>
 					{/* op button */}
@@ -335,6 +342,8 @@ export default {
 				show-close={false}
 				v-model={this.visible}></el-dialog>
 		);
+
+		console.log(this.props["custom-class"])
 
 		const customClass = [
 			"cl-dialog",
