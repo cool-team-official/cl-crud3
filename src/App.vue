@@ -61,6 +61,10 @@
 				@open="onOpen"
 				@close="onClose"
 			>
+				<template #slot-test>
+					<test></test>
+				</template>
+
 				<template #slot-crud>
 					<cl-crud @load="onLoad2">
 						<el-row>
@@ -96,7 +100,7 @@
 			@close="onClose"
 			@closed="onClosed"
 		>
-			<test />
+			Hello!
 		</cl-dialog>
 	</div>
 </template>
@@ -211,8 +215,14 @@ const testService = {
 export default {
 	components: {
 		test: {
+			inject: ["form"],
+			methods: {
+				update() {
+					this.form.name = "icssoa update";
+				}
+			},
 			render() {
-				return Math.random();
+				return <el-button onclick={this.update}>更新name</el-button>;
 			}
 		}
 	},
@@ -300,6 +310,13 @@ export default {
 							name: "el-select",
 							multiple: true,
 							options: []
+						}
+					},
+					{
+						label: "测试",
+						prop: "test",
+						component: {
+							name: "slot-test"
 						}
 					},
 					{

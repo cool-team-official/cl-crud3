@@ -19,6 +19,11 @@ export default {
 		}
 	},
 	emits: ["update:modelValue"],
+	provide() {
+		return {
+			form: this.form
+		}
+	},
 	data() {
 		return {
 			visible: false,

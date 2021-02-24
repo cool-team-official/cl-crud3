@@ -40,6 +40,11 @@ export default {
 	},
 	emits: ["open", "close", "reset", "clear"],
 	inject: ["crud", 'mitt'],
+	provide() {
+		return {
+			form: this.form
+		}
+	},
 	mixins: [Screen],
 	data() {
 		return {
